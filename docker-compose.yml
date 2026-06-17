@@ -1,0 +1,8 @@
+services:
+  brewer:
+    build:
+      context: .
+    container_name: brewer
+    ports:
+      - "8082:80"
+    restart: unless-stopped
