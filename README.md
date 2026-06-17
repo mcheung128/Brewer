@@ -2,7 +2,7 @@
 
 ## Container Deployment
 
-This app is a static Vite frontend. The container flow is:
+This app is a static Vite frontend, there is no backend yet. All data is stored locally in the browser's localStorage.
 
 1. Build the app with Node.
 2. Serve the generated `dist/` files with Nginx.
@@ -21,18 +21,7 @@ Run it:
 docker run -d --name brewer -p 8080:80 --restart unless-stopped brewer
 ```
 
-Then open `http://<your-server-ip>:8080`.
-
-### Docker Compose
-
-Start it with:
-
-```powershell
-docker compose up -d --build
-```
-
 ### Notes
 
 - App data is stored in browser `localStorage`, not on the server filesystem.
-- Each browser/device keeps its own brew history unless you add a backend later.
-- If you use a reverse proxy like Nginx Proxy Manager, Caddy, or Traefik, proxy to container port `80`.
+- Each browser/device keeps its own brew history
