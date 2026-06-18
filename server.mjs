@@ -1,23 +1,35 @@
 import { createServer } from "node:http";
 import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync, createReadStream } from "node:fs";
+import { existsSync, createReadStream } from "node:fs";
 import { extname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import pg from "pg";
+
+const { Pool } = pg;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = resolve(__filename, "..");
-const DATA_DIR = resolve(process.env.DATA_DIR ?? join(__dirname, ".data"));
-const DATA_FILE = join(DATA_DIR, "db.json");
 const DIST_DIR = join(__dirname, "dist");
 const PUBLIC_DIR = join(__dirname, "public");
 const PORT = Number(process.env.PORT ?? 3001);
+const DATABASE_URL = process.env.DATABASE_URL;
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 14;
 
-const BREW_METHODS = ["V60", "Chemex", "Kalita", "AeroPress", "French press", "Espresso", "Cold brew"];
+const createId = () =>
+  `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-const createId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-
-const template = (name, method, dose, water, grindSize, waterTemp, numberOfPours, pourTiming, totalBrewTime, filterType) => ({
+const template = (
+  name,
+  method,
+  dose,
+  water,
+  grindSize,
+  waterTemp,
+  numberOfPours,
+  pourTiming,
+  totalBrewTime,
+  filterType,
+) => ({
   id: createId(),
   name,
   method,
@@ -32,9 +44,18 @@ const template = (name, method, dose, water, grindSize, waterTemp, numberOfPours
 });
 
 const seededTemplates = () => [
-  template("James Hoffmann V60", "V60", 30, 500, "Medium-fine", 96, 5, "0:00 bloom, then pours every 30s", "3:30", "Paper"),
-  template("My Daily V60", "V60", 18, 300, "Medium", 94, 4, "Pulse pours every 25s", "2:50", "Paper"),
-  template("Stronger Iced Pourover", "Kalita", 24, 220, "Medium-fine", 95, 4, "Short aggressive pulses", "2:40", "Wave paper"),
+  template(
+    "Hoffmann Method",
+    "V60",
+    15,
+    250,
+    "Medium-fine",
+    96,
+    5,
+    "0:00 bloom, then pours every 30s",
+    "3:30",
+    "Paper",
+  ),
 ];
 
 const createDefaultState = () => ({
@@ -43,52 +64,23 @@ const createDefaultState = () => ({
   templates: seededTemplates(),
 });
 
-const ensureDb = () => {
-  if (!existsSync(DATA_DIR)) {
-    mkdirSync(DATA_DIR, { recursive: true });
-  }
+if (!DATABASE_URL) {
+  throw new Error("DATABASE_URL is required.");
+}
 
-  if (!existsSync(DATA_FILE)) {
-    writeFileSync(
-      DATA_FILE,
-      JSON.stringify(
-        {
-          users: [],
-          sessions: [],
-          states: {},
-        },
-        null,
-        2,
-      ),
-    );
-  }
-};
-
-const readDb = () => {
-  ensureDb();
-  return JSON.parse(readFileSync(DATA_FILE, "utf8"));
-};
-
-const writeDb = (db) => {
-  writeFileSync(DATA_FILE, JSON.stringify(db, null, 2));
-};
-
-const hashPassword = (password, salt = randomBytes(16).toString("hex")) => {
-  const hash = scryptSync(password, salt, 64).toString("hex");
-  return { salt, hash };
-};
-
-const verifyPassword = (password, salt, expectedHash) => {
-  const actualHash = scryptSync(password, salt, 64);
-  const expected = Buffer.from(expectedHash, "hex");
-  return actualHash.length === expected.length && timingSafeEqual(actualHash, expected);
-};
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+  ssl:
+    process.env.PGSSL === "disable" || DATABASE_URL.includes("localhost")
+      ? false
+      : { rejectUnauthorized: false },
+});
 
 const sanitizeUser = (user) => ({
   id: user.id,
   name: user.name ?? user.email,
   email: user.email,
-  createdAt: user.createdAt,
+  createdAt: user.created_at,
 });
 
 const sendJson = (response, statusCode, payload) => {
@@ -129,23 +121,18 @@ const getToken = (request) => {
   return header.slice("Bearer ".length);
 };
 
-const getSession = (db, token) => {
-  if (!token) {
-    return null;
-  }
+const hashPassword = (password, salt = randomBytes(16).toString("hex")) => {
+  const hash = scryptSync(password, salt, 64).toString("hex");
+  return { salt, hash };
+};
 
-  const session = db.sessions.find((entry) => entry.token === token);
-  if (!session) {
-    return null;
-  }
-
-  if (Date.now() > new Date(session.expiresAt).getTime()) {
-    db.sessions = db.sessions.filter((entry) => entry.token !== token);
-    writeDb(db);
-    return null;
-  }
-
-  return session;
+const verifyPassword = (password, salt, expectedHash) => {
+  const actualHash = scryptSync(password, salt, 64);
+  const expected = Buffer.from(expectedHash, "hex");
+  return (
+    actualHash.length === expected.length &&
+    timingSafeEqual(actualHash, expected)
+  );
 };
 
 const validateState = (state) => {
@@ -153,7 +140,121 @@ const validateState = (state) => {
     return false;
   }
 
-  return Array.isArray(state.beans) && Array.isArray(state.brews) && Array.isArray(state.templates);
+  return (
+    Array.isArray(state.beans) &&
+    Array.isArray(state.brews) &&
+    Array.isArray(state.templates)
+  );
+};
+
+const ensureSchema = async () => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      password_salt TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS sessions (
+      token TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS sessions_user_id_idx ON sessions(user_id);
+    CREATE INDEX IF NOT EXISTS sessions_expires_at_idx ON sessions(expires_at);
+
+    CREATE TABLE IF NOT EXISTS app_states (
+      user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      state JSONB NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL
+    );
+  `);
+};
+
+const getSession = async (token) => {
+  if (!token) {
+    return null;
+  }
+
+  const { rows } = await pool.query(
+    `
+      SELECT token, user_id, created_at, expires_at
+      FROM sessions
+      WHERE token = $1
+    `,
+    [token],
+  );
+
+  const session = rows[0];
+  if (!session) {
+    return null;
+  }
+
+  if (Date.now() > new Date(session.expires_at).getTime()) {
+    await pool.query(`DELETE FROM sessions WHERE token = $1`, [token]);
+    return null;
+  }
+
+  return session;
+};
+
+const getUserById = async (userId) => {
+  const { rows } = await pool.query(
+    `
+      SELECT id, name, email, created_at
+      FROM users
+      WHERE id = $1
+    `,
+    [userId],
+  );
+
+  return rows[0] ?? null;
+};
+
+const getStateForUser = async (userId) => {
+  const { rows } = await pool.query(
+    `
+      SELECT state
+      FROM app_states
+      WHERE user_id = $1
+    `,
+    [userId],
+  );
+
+  if (rows[0]?.state) {
+    return rows[0].state;
+  }
+
+  const state = createDefaultState();
+  await pool.query(
+    `
+      INSERT INTO app_states (user_id, state, updated_at)
+      VALUES ($1, $2::jsonb, NOW())
+      ON CONFLICT (user_id)
+      DO NOTHING
+    `,
+    [userId, JSON.stringify(state)],
+  );
+  return state;
+};
+
+const saveStateForUser = async (userId, state) => {
+  await pool.query(
+    `
+      INSERT INTO app_states (user_id, state, updated_at)
+      VALUES ($1, $2::jsonb, NOW())
+      ON CONFLICT (user_id)
+      DO UPDATE
+      SET state = EXCLUDED.state,
+          updated_at = EXCLUDED.updated_at
+    `,
+    [userId, JSON.stringify(state)],
+  );
 };
 
 const mimeTypes = {
@@ -200,7 +301,12 @@ const server = createServer(async (request, response) => {
   const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
 
   if (url.pathname === "/health" && request.method === "GET") {
-    sendJson(response, 200, { ok: true });
+    try {
+      await pool.query("SELECT 1");
+      sendJson(response, 200, { ok: true });
+    } catch {
+      sendError(response, 503, "Database unavailable");
+    }
     return;
   }
 
@@ -221,39 +327,72 @@ const server = createServer(async (request, response) => {
         return;
       }
 
-      const db = readDb();
-      if (db.users.some((user) => user.email === email)) {
+      const existingUser = await pool.query(
+        `
+          SELECT id
+          FROM users
+          WHERE email = $1
+        `,
+        [email],
+      );
+      if (existingUser.rowCount) {
         sendError(response, 409, "An account with that email already exists.");
         return;
       }
 
-      const { salt, hash } = hashPassword(password);
-      const user = {
-        id: createId(),
-        name,
-        email,
-        passwordSalt: salt,
-        passwordHash: hash,
-        createdAt: new Date().toISOString(),
-      };
+      const userId = createId();
       const token = randomBytes(32).toString("hex");
+      const createdAt = new Date().toISOString();
+      const expiresAt = new Date(Date.now() + SESSION_TTL_MS).toISOString();
+      const { salt, hash } = hashPassword(password);
+      const client = await pool.connect();
 
-      db.users.push(user);
-      db.sessions.push({
-        token,
-        userId: user.id,
-        createdAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + SESSION_TTL_MS).toISOString(),
-      });
-      db.states[user.id] = createDefaultState();
-      writeDb(db);
+      try {
+        await client.query("BEGIN");
+        await client.query(
+          `
+            INSERT INTO users (id, name, email, password_salt, password_hash, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6)
+          `,
+          [userId, name, email, salt, hash, createdAt],
+        );
+        await client.query(
+          `
+            INSERT INTO sessions (token, user_id, created_at, expires_at)
+            VALUES ($1, $2, $3, $4)
+          `,
+          [token, userId, createdAt, expiresAt],
+        );
+        await client.query(
+          `
+            INSERT INTO app_states (user_id, state, updated_at)
+            VALUES ($1, $2::jsonb, NOW())
+          `,
+          [userId, JSON.stringify(createDefaultState())],
+        );
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
 
       sendJson(response, 201, {
         token,
-        user: sanitizeUser(user),
+        user: {
+          id: userId,
+          name,
+          email,
+          createdAt,
+        },
       });
     } catch (error) {
-      sendError(response, 400, error instanceof Error ? error.message : "Registration failed");
+      sendError(
+        response,
+        400,
+        error instanceof Error ? error.message : "Registration failed",
+      );
     }
     return;
   }
@@ -263,99 +402,112 @@ const server = createServer(async (request, response) => {
       const body = await parseBody(request);
       const email = String(body.email ?? "").trim().toLowerCase();
       const password = String(body.password ?? "");
-      const db = readDb();
-      const user = db.users.find((entry) => entry.email === email);
+      const { rows } = await pool.query(
+        `
+          SELECT id, name, email, password_salt, password_hash, created_at
+          FROM users
+          WHERE email = $1
+        `,
+        [email],
+      );
+      const user = rows[0];
 
-      if (!user || !verifyPassword(password, user.passwordSalt, user.passwordHash)) {
+      if (
+        !user ||
+        !verifyPassword(password, user.password_salt, user.password_hash)
+      ) {
         sendError(response, 401, "Invalid email or password.");
         return;
       }
 
       const token = randomBytes(32).toString("hex");
-      db.sessions.push({
-        token,
-        userId: user.id,
-        createdAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + SESSION_TTL_MS).toISOString(),
-      });
-      writeDb(db);
+      await pool.query(
+        `
+          INSERT INTO sessions (token, user_id, created_at, expires_at)
+          VALUES ($1, $2, NOW(), NOW() + INTERVAL '14 days')
+        `,
+        [token, user.id],
+      );
 
       sendJson(response, 200, {
         token,
         user: sanitizeUser(user),
       });
     } catch (error) {
-      sendError(response, 400, error instanceof Error ? error.message : "Login failed");
+      sendError(
+        response,
+        400,
+        error instanceof Error ? error.message : "Login failed",
+      );
     }
     return;
   }
 
   if (url.pathname.startsWith("/api/")) {
-    const db = readDb();
-    const token = getToken(request);
-    const session = getSession(db, token);
+    try {
+      const token = getToken(request);
+      const session = await getSession(token);
 
-    if (url.pathname === "/api/auth/logout" && request.method === "POST") {
+      if (url.pathname === "/api/auth/logout" && request.method === "POST") {
+        if (!session) {
+          sendError(response, 401, "Unauthorized");
+          return;
+        }
+
+        await pool.query(`DELETE FROM sessions WHERE token = $1`, [session.token]);
+        sendJson(response, 200, { ok: true });
+        return;
+      }
+
       if (!session) {
         sendError(response, 401, "Unauthorized");
         return;
       }
 
-      db.sessions = db.sessions.filter((entry) => entry.token !== session.token);
-      writeDb(db);
-      sendJson(response, 200, { ok: true });
-      return;
-    }
-
-    if (!session) {
-      sendError(response, 401, "Unauthorized");
-      return;
-    }
-
-    const user = db.users.find((entry) => entry.id === session.userId);
-    if (!user) {
-      sendError(response, 401, "Unauthorized");
-      return;
-    }
-
-    if (url.pathname === "/api/auth/me" && request.method === "GET") {
-      sendJson(response, 200, { user: sanitizeUser(user) });
-      return;
-    }
-
-    if (url.pathname === "/api/state" && request.method === "GET") {
-      const state = db.states[user.id] ?? createDefaultState();
-      if (!db.states[user.id]) {
-        db.states[user.id] = state;
-        writeDb(db);
+      const user = await getUserById(session.user_id);
+      if (!user) {
+        sendError(response, 401, "Unauthorized");
+        return;
       }
-      sendJson(response, 200, { state });
-      return;
-    }
 
-    if (url.pathname === "/api/state" && request.method === "PUT") {
-      try {
+      if (url.pathname === "/api/auth/me" && request.method === "GET") {
+        sendJson(response, 200, { user: sanitizeUser(user) });
+        return;
+      }
+
+      if (url.pathname === "/api/state" && request.method === "GET") {
+        const state = await getStateForUser(user.id);
+        sendJson(response, 200, { state });
+        return;
+      }
+
+      if (url.pathname === "/api/state" && request.method === "PUT") {
         const body = await parseBody(request);
         if (!validateState(body.state)) {
           sendError(response, 400, "Invalid state payload.");
           return;
         }
 
-        db.states[user.id] = body.state;
-        writeDb(db);
+        await saveStateForUser(user.id, body.state);
         sendJson(response, 200, { ok: true });
-      } catch (error) {
-        sendError(response, 400, error instanceof Error ? error.message : "Could not save state");
+        return;
       }
-      return;
-    }
 
-    sendError(response, 404, "Not found");
+      sendError(response, 404, "Not found");
+    } catch (error) {
+      sendError(
+        response,
+        500,
+        error instanceof Error ? error.message : "Server error",
+      );
+    }
     return;
   }
 
   serveStatic(request, response);
 });
+
+await ensureSchema();
 
 server.listen(PORT, () => {
   console.log(`Brewer server listening on http://localhost:${PORT}`);

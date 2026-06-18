@@ -62,8 +62,8 @@ const brewSteps = [
   "Review",
 ] as const;
 
-const POUR_OVER_METHODS: BrewMethod[] = ["V60", "Chemex", "Kalita"];
-const FILTER_METHODS: BrewMethod[] = ["V60", "Chemex", "Kalita", "AeroPress"];
+const POUR_OVER_METHODS: BrewMethod[] = ["V60", "Chemex"];
+const FILTER_METHODS: BrewMethod[] = ["V60", "Chemex", "AeroPress"];
 
 const todayLocal = () => {
   const now = new Date();
@@ -325,7 +325,9 @@ function App() {
   const updateBeanRecord = (beanId: string, updates: NewBeanDraft) => {
     setState((current) => ({
       ...current,
-      beans: current.beans.map((bean) => (bean.id === beanId ? { ...bean, ...updates } : bean)),
+      beans: current.beans.map((bean) =>
+        bean.id === beanId ? { ...bean, ...updates } : bean,
+      ),
     }));
   };
 
@@ -448,7 +450,10 @@ function App() {
     }));
   };
 
-  const updateTemplateRecord = (templateId: string, updates: Omit<RecipeTemplate, "id">) => {
+  const updateTemplateRecord = (
+    templateId: string,
+    updates: Omit<RecipeTemplate, "id">,
+  ) => {
     setState((current) => ({
       ...current,
       templates: current.templates.map((template) =>
@@ -460,9 +465,13 @@ function App() {
   const deleteTemplateRecord = (templateId: string) => {
     setState((current) => ({
       ...current,
-      templates: current.templates.filter((template) => template.id !== templateId),
+      templates: current.templates.filter(
+        (template) => template.id !== templateId,
+      ),
       brews: current.brews.map((brew) =>
-        brew.templateId === templateId ? { ...brew, templateId: undefined } : brew,
+        brew.templateId === templateId
+          ? { ...brew, templateId: undefined }
+          : brew,
       ),
     }));
 

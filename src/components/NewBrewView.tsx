@@ -1,5 +1,13 @@
 import type { Dispatch, SetStateAction } from "react";
-import { BREW_METHODS, type Bean, type BrewMethod, type NewBeanDraft, type NewBrewDraft, type RecipeTemplate, type TasteAttribute } from "../types";
+import {
+  BREW_METHODS,
+  type Bean,
+  type BrewMethod,
+  type NewBeanDraft,
+  type NewBrewDraft,
+  type RecipeTemplate,
+  type TasteAttribute,
+} from "../types";
 
 type NewBrewViewProps = {
   applyTemplate: (templateId: string) => void;
@@ -15,7 +23,9 @@ type NewBrewViewProps = {
   saveTemplateFromDraft: () => void;
   setShowBeanForm: Dispatch<SetStateAction<boolean>>;
   setStep: Dispatch<SetStateAction<number>>;
-  setTemplateDraft: Dispatch<SetStateAction<{ name: string; method: BrewMethod }>>;
+  setTemplateDraft: Dispatch<
+    SetStateAction<{ name: string; method: BrewMethod }>
+  >;
   showBeanForm: boolean;
   showsFilterType: boolean;
   showsPourFields: boolean;
@@ -23,8 +33,14 @@ type NewBrewViewProps = {
   tasteFields: Array<{ key: TasteAttribute; label: string }>;
   templateDraft: { name: string; method: BrewMethod };
   templates: RecipeTemplate[];
-  updateBeanDraft: <K extends keyof NewBeanDraft>(key: K, value: NewBeanDraft[K]) => void;
-  updateDraft: <K extends keyof NewBrewDraft>(key: K, value: NewBrewDraft[K]) => void;
+  updateBeanDraft: <K extends keyof NewBeanDraft>(
+    key: K,
+    value: NewBeanDraft[K],
+  ) => void;
+  updateDraft: <K extends keyof NewBrewDraft>(
+    key: K,
+    value: NewBrewDraft[K],
+  ) => void;
   updateMethod: (method: BrewMethod) => void;
 };
 
@@ -70,7 +86,10 @@ function NewBrewView({
             <strong>{brewSteps[step - 1]}</strong>
           </div>
           <div className="progress-track" aria-hidden="true">
-            <div className="progress-fill" style={{ width: `${(step / brewSteps.length) * 100}%` }} />
+            <div
+              className="progress-fill"
+              style={{ width: `${(step / brewSteps.length) * 100}%` }}
+            />
           </div>
           <div className="progress-labels">
             {brewSteps.map((label, index) => {
@@ -78,7 +97,11 @@ function NewBrewView({
               return (
                 <button
                   key={label}
-                  className={currentStep === step ? "progress-label active" : "progress-label"}
+                  className={
+                    currentStep === step
+                      ? "progress-label active"
+                      : "progress-label"
+                  }
                   onClick={() => setStep(currentStep)}
                 >
                   {label}
@@ -92,11 +115,18 @@ function NewBrewView({
           <div className="form-grid">
             <label>
               Brew name
-              <input value={draft.name} onChange={(e) => updateDraft("name", e.target.value)} />
+              <input
+                value={draft.name}
+                onChange={(e) => updateDraft("name", e.target.value)}
+              />
             </label>
             <label>
               Date and time
-              <input type="datetime-local" value={draft.brewedAt} onChange={(e) => updateDraft("brewedAt", e.target.value)} />
+              <input
+                type="datetime-local"
+                value={draft.brewedAt}
+                onChange={(e) => updateDraft("brewedAt", e.target.value)}
+              />
             </label>
             <label>
               Recipe template
@@ -117,7 +147,10 @@ function NewBrewView({
             </label>
             <label>
               Brew method
-              <select value={draft.method} onChange={(e) => updateMethod(e.target.value as BrewMethod)}>
+              <select
+                value={draft.method}
+                onChange={(e) => updateMethod(e.target.value as BrewMethod)}
+              >
                 {BREW_METHODS.map((method) => (
                   <option key={method} value={method}>
                     {method}
@@ -133,7 +166,10 @@ function NewBrewView({
             <div className="form-grid">
               <label>
                 Select beans
-                <select value={draft.beanId} onChange={(e) => updateDraft("beanId", e.target.value)}>
+                <select
+                  value={draft.beanId}
+                  onChange={(e) => updateDraft("beanId", e.target.value)}
+                >
                   <option value="">Choose saved beans</option>
                   {beans.map((bean) => (
                     <option key={bean.id} value={bean.id}>
@@ -144,7 +180,10 @@ function NewBrewView({
               </label>
             </div>
             <div className="inline-actions">
-              <button className="secondary-button" onClick={() => setShowBeanForm((current) => !current)}>
+              <button
+                className="secondary-button"
+                onClick={() => setShowBeanForm((current) => !current)}
+              >
                 {showBeanForm ? "Hide Bean Form" : "Add New Beans"}
               </button>
             </div>
@@ -153,47 +192,105 @@ function NewBrewView({
                 <div className="form-grid">
                   <label>
                     Roaster
-                    <input value={beanDraft.roaster} onChange={(e) => updateBeanDraft("roaster", e.target.value)} />
+                    <input
+                      value={beanDraft.roaster}
+                      onChange={(e) =>
+                        updateBeanDraft("roaster", e.target.value)
+                      }
+                    />
                   </label>
                   <label>
                     Coffee name
-                    <input value={beanDraft.coffeeName} onChange={(e) => updateBeanDraft("coffeeName", e.target.value)} />
+                    <input
+                      value={beanDraft.coffeeName}
+                      onChange={(e) =>
+                        updateBeanDraft("coffeeName", e.target.value)
+                      }
+                    />
                   </label>
                   <label>
                     Origin / country
-                    <input value={beanDraft.originCountry} onChange={(e) => updateBeanDraft("originCountry", e.target.value)} />
+                    <input
+                      value={beanDraft.originCountry}
+                      onChange={(e) =>
+                        updateBeanDraft("originCountry", e.target.value)
+                      }
+                    />
                   </label>
                   <label>
                     Region / farm
-                    <input value={beanDraft.regionFarm} onChange={(e) => updateBeanDraft("regionFarm", e.target.value)} />
+                    <input
+                      value={beanDraft.regionFarm}
+                      onChange={(e) =>
+                        updateBeanDraft("regionFarm", e.target.value)
+                      }
+                    />
                   </label>
                   <label>
                     Variety
-                    <input value={beanDraft.variety} onChange={(e) => updateBeanDraft("variety", e.target.value)} />
+                    <input
+                      value={beanDraft.variety}
+                      onChange={(e) =>
+                        updateBeanDraft("variety", e.target.value)
+                      }
+                    />
                   </label>
                   <label>
                     Process
-                    <input value={beanDraft.process} onChange={(e) => updateBeanDraft("process", e.target.value)} placeholder="Washed, natural, honey" />
+                    <input
+                      value={beanDraft.process}
+                      onChange={(e) =>
+                        updateBeanDraft("process", e.target.value)
+                      }
+                      placeholder="Washed, natural, honey"
+                    />
                   </label>
                   <label>
                     Roast level
-                    <input value={beanDraft.roastLevel} onChange={(e) => updateBeanDraft("roastLevel", e.target.value)} />
+                    <input
+                      value={beanDraft.roastLevel}
+                      onChange={(e) =>
+                        updateBeanDraft("roastLevel", e.target.value)
+                      }
+                    />
                   </label>
                   <label>
                     Roast date
-                    <input type="date" value={beanDraft.roastDate} onChange={(e) => updateBeanDraft("roastDate", e.target.value)} />
+                    <input
+                      type="date"
+                      value={beanDraft.roastDate}
+                      onChange={(e) =>
+                        updateBeanDraft("roastDate", e.target.value)
+                      }
+                    />
                   </label>
                   <label>
                     Bag size
-                    <input value={beanDraft.bagSize} onChange={(e) => updateBeanDraft("bagSize", e.target.value)} placeholder="250g" />
+                    <input
+                      value={beanDraft.bagSize}
+                      onChange={(e) =>
+                        updateBeanDraft("bagSize", e.target.value)
+                      }
+                      placeholder="250g"
+                    />
                   </label>
                   <label>
                     Price
-                    <input value={beanDraft.price} onChange={(e) => updateBeanDraft("price", e.target.value)} placeholder="$22" />
+                    <input
+                      value={beanDraft.price}
+                      onChange={(e) => updateBeanDraft("price", e.target.value)}
+                      placeholder="$22"
+                    />
                   </label>
                   <label className="full-span">
                     Tasting notes from bag
-                    <textarea value={beanDraft.bagNotes} onChange={(e) => updateBeanDraft("bagNotes", e.target.value)} rows={3} />
+                    <textarea
+                      value={beanDraft.bagNotes}
+                      onChange={(e) =>
+                        updateBeanDraft("bagNotes", e.target.value)
+                      }
+                      rows={3}
+                    />
                   </label>
                 </div>
                 <button className="primary-button" onClick={saveBean}>
@@ -208,37 +305,64 @@ function NewBrewView({
           <div className="stack">
             <div className="form-grid">
               <label>
-                Dose (g)
-                <input type="number" value={draft.dose || ""} onChange={(e) => updateDraft("dose", Number(e.target.value))} placeholder="18" />
+                Coffee in (g)
+                <input
+                  type="number"
+                  value={draft.dose || ""}
+                  onChange={(e) => updateDraft("dose", Number(e.target.value))}
+                  placeholder=""
+                />
               </label>
               <label>
-                Water (g)
-                <input type="number" value={draft.water || ""} onChange={(e) => updateDraft("water", Number(e.target.value))} placeholder="300" />
+                Water out(g)
+                <input
+                  type="number"
+                  value={draft.water || ""}
+                  onChange={(e) => updateDraft("water", Number(e.target.value))}
+                  placeholder=""
+                />
               </label>
               <label>
                 Brew ratio
-                <input value={`1:${calcRatio(draft.dose, draft.water)}`} disabled />
+                <input
+                  value={`1:${calcRatio(draft.dose, draft.water)}`}
+                  disabled
+                />
               </label>
               <label>
                 Grind size
-                <input value={draft.grindSize} onChange={(e) => updateDraft("grindSize", e.target.value)} placeholder="Medium" />
+                <input
+                  value={draft.grindSize}
+                  onChange={(e) => updateDraft("grindSize", e.target.value)}
+                  placeholder=""
+                />
               </label>
               <label>
                 Grinder used
-                <input value={draft.grinderUsed} onChange={(e) => updateDraft("grinderUsed", e.target.value)} placeholder="K-Ultra" />
+                <input
+                  value={draft.grinderUsed}
+                  onChange={(e) => updateDraft("grinderUsed", e.target.value)}
+                  placeholder=""
+                />
               </label>
               <label>
                 Water temperature (C)
                 <input
                   type="number"
                   value={draft.waterTemp || ""}
-                  onChange={(e) => updateDraft("waterTemp", Number(e.target.value))}
-                  placeholder="94"
+                  onChange={(e) =>
+                    updateDraft("waterTemp", Number(e.target.value))
+                  }
+                  placeholder=""
                 />
               </label>
               <label>
                 Total brew time
-                <input value={draft.totalBrewTime} onChange={(e) => updateDraft("totalBrewTime", e.target.value)} placeholder="2:50" />
+                <input
+                  value={draft.totalBrewTime}
+                  onChange={(e) => updateDraft("totalBrewTime", e.target.value)}
+                  placeholder=""
+                />
               </label>
               {showsPourFields && (
                 <label>
@@ -246,7 +370,9 @@ function NewBrewView({
                   <input
                     type="number"
                     value={draft.numberOfPours || ""}
-                    onChange={(e) => updateDraft("numberOfPours", Number(e.target.value))}
+                    onChange={(e) =>
+                      updateDraft("numberOfPours", Number(e.target.value))
+                    }
                     placeholder="4"
                   />
                 </label>
@@ -254,13 +380,21 @@ function NewBrewView({
               {showsPourFields && (
                 <label>
                   Pour timing
-                  <input value={draft.pourTiming} onChange={(e) => updateDraft("pourTiming", e.target.value)} placeholder="0:00, 0:45, 1:15..." />
+                  <input
+                    value={draft.pourTiming}
+                    onChange={(e) => updateDraft("pourTiming", e.target.value)}
+                    placeholder="0:00, 0:45, 1:15..."
+                  />
                 </label>
               )}
               {showsFilterType && (
                 <label>
                   Filter type
-                  <input value={draft.filterType} onChange={(e) => updateDraft("filterType", e.target.value)} placeholder="Paper" />
+                  <input
+                    value={draft.filterType}
+                    onChange={(e) => updateDraft("filterType", e.target.value)}
+                    placeholder=""
+                  />
                 </label>
               )}
             </div>
@@ -268,9 +402,15 @@ function NewBrewView({
               <div className="split-line">
                 <div>
                   <h3>Save this recipe as a template</h3>
-                  <p>Use your current brew settings as a starting point for future brews.</p>
+                  <p>
+                    Use your current brew settings as a starting point for
+                    future brews.
+                  </p>
                 </div>
-                <button className="secondary-button" onClick={saveTemplateFromDraft}>
+                <button
+                  className="secondary-button"
+                  onClick={saveTemplateFromDraft}
+                >
                   Save Template
                 </button>
               </div>
@@ -279,7 +419,12 @@ function NewBrewView({
                   Template name
                   <input
                     value={templateDraft.name}
-                    onChange={(e) => setTemplateDraft((current) => ({ ...current, name: e.target.value }))}
+                    onChange={(e) =>
+                      setTemplateDraft((current) => ({
+                        ...current,
+                        name: e.target.value,
+                      }))
+                    }
                     placeholder="My daily V60"
                   />
                 </label>
@@ -287,7 +432,12 @@ function NewBrewView({
                   Method
                   <select
                     value={templateDraft.method}
-                    onChange={(e) => setTemplateDraft((current) => ({ ...current, method: e.target.value as BrewMethod }))}
+                    onChange={(e) =>
+                      setTemplateDraft((current) => ({
+                        ...current,
+                        method: e.target.value as BrewMethod,
+                      }))
+                    }
                   >
                     {BREW_METHODS.map((method) => (
                       <option key={method} value={method}>
@@ -306,7 +456,15 @@ function NewBrewView({
             <div className="form-grid">
               <label>
                 Final rating
-                <input type="range" min="1" max="10" value={draft.rating} onChange={(e) => updateDraft("rating", Number(e.target.value))} />
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={draft.rating}
+                  onChange={(e) =>
+                    updateDraft("rating", Number(e.target.value))
+                  }
+                />
                 <span className="range-value">{draft.rating}/10</span>
               </label>
               <label className="full-span">
@@ -322,7 +480,9 @@ function NewBrewView({
                 What to change next time
                 <textarea
                   value={draft.changeNextTime}
-                  onChange={(e) => updateDraft("changeNextTime", e.target.value)}
+                  onChange={(e) =>
+                    updateDraft("changeNextTime", e.target.value)
+                  }
                   rows={3}
                   placeholder="Too bitter and dry -> grind coarser or lower temp next time."
                 />
@@ -356,13 +516,18 @@ function NewBrewView({
             <div className="summary-card">
               <h3>{draft.name || "Untitled brew"}</h3>
               <p>
-                {draft.method} - Ratio 1:{calcRatio(draft.dose, draft.water)} - Rating {draft.rating}/10
+                {draft.method} - Ratio 1:{calcRatio(draft.dose, draft.water)} -
+                Rating {draft.rating}/10
               </p>
             </div>
             <div className="summary-grid">
               <article>
                 <span>Beans</span>
-                <strong>{draft.beanId ? `${beansById[draft.beanId]?.roaster} ${beansById[draft.beanId]?.coffeeName}` : "Select beans"}</strong>
+                <strong>
+                  {draft.beanId
+                    ? `${beansById[draft.beanId]?.roaster} ${beansById[draft.beanId]?.coffeeName}`
+                    : "Select beans"}
+                </strong>
               </article>
               <article>
                 <span>Brewed</span>
@@ -379,15 +544,25 @@ function NewBrewView({
         )}
 
         <div className="wizard-actions">
-          <button className="secondary-button" onClick={() => setStep((current) => Math.max(1, current - 1))}>
+          <button
+            className="secondary-button"
+            onClick={() => setStep((current) => Math.max(1, current - 1))}
+          >
             Back
           </button>
           {step < 5 ? (
-            <button className="primary-button" onClick={() => setStep((current) => Math.min(5, current + 1))}>
+            <button
+              className="primary-button"
+              onClick={() => setStep((current) => Math.min(5, current + 1))}
+            >
               Next
             </button>
           ) : (
-            <button className="primary-button" onClick={saveBrew} disabled={!draft.name || !draft.beanId}>
+            <button
+              className="primary-button"
+              onClick={saveBrew}
+              disabled={!draft.name || !draft.beanId}
+            >
               Save Brew
             </button>
           )}

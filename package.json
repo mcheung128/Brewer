@@ -6,10 +6,10 @@
   "scripts": {
     "dev": "vite",
     "dev:client": "vite",
-    "dev:server": "node server.mjs",
+    "dev:server": "node --env-file-if-exists=.env server.mjs",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "start": "node server.mjs"
+    "start": "node --env-file-if-exists=.env server.mjs"
   },
   "devDependencies": {
     "@types/react": "^19.2.16",
@@ -18,6 +18,7 @@
     "vite": "^8.0.12"
   },
   "dependencies": {
+    "pg": "^8.21.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   }

@@ -1,9 +1,7 @@
 export const BREW_METHODS = [
   'V60',
   'Chemex',
-  'Kalita',
   'AeroPress',
-  'French press',
   'Espresso',
   'Cold brew',
 ] as const

@@ -7,9 +7,22 @@ services:
       - "8082:3001"
     environment:
       PORT: 3001
+      DATABASE_URL: postgresql://brewer:brewer@postgres:5432/brewer
+      PGSSL: disable
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: brewer-postgres
+    environment:
+      POSTGRES_DB: brewer
+      POSTGRES_USER: brewer
+      POSTGRES_PASSWORD: brewer
     restart: unless-stopped
     volumes:
-      - brewer-data:/app/.data
+      - brewer-postgres-data:/var/lib/postgresql/data
 
 volumes:
-  brewer-data:
+  brewer-postgres-data:

@@ -7,7 +7,6 @@
     "healthcheckPath": "/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ALWAYS",
-    "runtime": "V2",
-    "requiredMountPath": "/app/.data"
+    "runtime": "V2"
   }
 }
