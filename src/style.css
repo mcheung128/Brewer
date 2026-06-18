@@ -72,6 +72,98 @@ textarea {
   min-height: 100vh;
 }
 
+.marketing-shell {
+  min-height: 100vh;
+  padding: 2rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.marketing-header,
+.marketing-grid {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.marketing-header {
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  align-items: stretch;
+}
+
+.marketing-header h1,
+.marketing-card h2 {
+  margin: 0;
+  font-family: 'Aptos Display', 'Segoe UI Variable Display', 'Inter', sans-serif;
+  letter-spacing: -0.04em;
+}
+
+.marketing-header h1 {
+  font-size: clamp(2.8rem, 6vw, 5rem);
+  line-height: 0.95;
+  max-width: 11ch;
+}
+
+.marketing-copy {
+  max-width: 58ch;
+  color: var(--text-soft);
+  font-size: 1.05rem;
+}
+
+.marketing-actions {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.marketing-panel,
+.marketing-card {
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow);
+}
+
+.marketing-panel {
+  border-radius: 32px;
+  padding: 1.5rem;
+  display: grid;
+  gap: 1rem;
+  background:
+    linear-gradient(180deg, rgba(20, 52, 49, 0.92), rgba(29, 82, 73, 0.86)),
+    var(--panel);
+  color: #effaf7;
+}
+
+.marketing-stat {
+  padding: 1rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.marketing-stat span {
+  display: block;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(228, 247, 242, 0.72);
+  margin-bottom: 0.45rem;
+}
+
+.marketing-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.marketing-card {
+  border-radius: 28px;
+  padding: 1.5rem;
+}
+
+.marketing-card p:last-child {
+  margin-bottom: 0;
+  color: var(--text-soft);
+}
+
 .shell {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
@@ -589,6 +681,32 @@ textarea {
   gap: 1rem;
 }
 
+.auth-google {
+  display: grid;
+  gap: 1rem;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.auth-google-button {
+  display: flex;
+  justify-content: center;
+}
+
 .auth-form label {
   display: grid;
   gap: 0.55rem;
@@ -619,6 +737,7 @@ textarea {
 }
 
 @media (max-width: 1100px) {
+  .marketing-header,
   .shell,
   .history-layout {
     grid-template-columns: 1fr;
@@ -635,6 +754,7 @@ textarea {
   .stats-grid,
   .highlights,
   .cards,
+  .marketing-grid,
   .taste-grid,
   .detail-grid,
   .summary-grid,
@@ -645,13 +765,17 @@ textarea {
 }
 
 @media (max-width: 720px) {
+  .marketing-shell,
   .content,
   .sidebar,
   .hero-card,
-  .panel {
+  .panel,
+  .marketing-card,
+  .marketing-panel {
     padding: 1rem;
   }
 
+  .marketing-actions,
   .hero-actions,
   .wizard-actions,
   .inline-actions,
@@ -664,6 +788,7 @@ textarea {
   .stats-grid,
   .highlights,
   .cards,
+  .marketing-grid,
   .taste-grid,
   .detail-grid,
   .summary-grid,

@@ -3,6 +3,7 @@ import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { existsSync, createReadStream } from "node:fs";
 import { extname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { OAuth2Client } from "google-auth-library";
 import pg from "pg";
 
 const { Pool } = pg;
@@ -13,6 +14,7 @@ const DIST_DIR = join(__dirname, "dist");
 const PUBLIC_DIR = join(__dirname, "public");
 const PORT = Number(process.env.PORT ?? 3001);
 const DATABASE_URL = process.env.DATABASE_URL;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 14;
 
 const createId = () =>
@@ -75,6 +77,7 @@ const pool = new Pool({
       ? false
       : { rejectUnauthorized: false },
 });
+const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
 const sanitizeUser = (user) => ({
   id: user.id,
@@ -82,6 +85,18 @@ const sanitizeUser = (user) => ({
   email: user.email,
   createdAt: user.created_at,
 });
+
+const createSessionForUser = async (userId) => {
+  const token = randomBytes(32).toString("hex");
+  await pool.query(
+    `
+      INSERT INTO sessions (token, user_id, created_at, expires_at)
+      VALUES ($1, $2, NOW(), NOW() + INTERVAL '14 days')
+    `,
+    [token, userId],
+  );
+  return token;
+};
 
 const sendJson = (response, statusCode, payload) => {
   response.writeHead(statusCode, {
@@ -158,6 +173,13 @@ const ensureSchema = async () => {
       created_at TIMESTAMPTZ NOT NULL
     );
 
+    ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS google_subject TEXT;
+
+    CREATE UNIQUE INDEX IF NOT EXISTS users_google_subject_key
+      ON users(google_subject)
+      WHERE google_subject IS NOT NULL;
+
     CREATE TABLE IF NOT EXISTS sessions (
       token TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -214,6 +236,31 @@ const getUserById = async (userId) => {
   );
 
   return rows[0] ?? null;
+};
+
+const verifyGoogleCredential = async (credential) => {
+  if (!googleClient || !GOOGLE_CLIENT_ID) {
+    throw new Error("Google sign-in is not configured.");
+  }
+
+  const ticket = await googleClient.verifyIdToken({
+    idToken: credential,
+    audience: GOOGLE_CLIENT_ID,
+  });
+  const payload = ticket.getPayload();
+
+  if (!payload?.sub || !payload.email || !payload.email_verified) {
+    throw new Error("Google account email could not be verified.");
+  }
+
+  return {
+    subject: payload.sub,
+    email: payload.email.toLowerCase(),
+    name:
+      typeof payload.name === "string" && payload.name.trim()
+        ? payload.name.trim()
+        : payload.email,
+  };
 };
 
 const getStateForUser = async (userId) => {
@@ -307,6 +354,13 @@ const server = createServer(async (request, response) => {
     } catch {
       sendError(response, 503, "Database unavailable");
     }
+    return;
+  }
+
+  if (url.pathname === "/api/auth/google/config" && request.method === "GET") {
+    sendJson(response, 200, {
+      clientId: GOOGLE_CLIENT_ID ?? null,
+    });
     return;
   }
 
@@ -420,14 +474,7 @@ const server = createServer(async (request, response) => {
         return;
       }
 
-      const token = randomBytes(32).toString("hex");
-      await pool.query(
-        `
-          INSERT INTO sessions (token, user_id, created_at, expires_at)
-          VALUES ($1, $2, NOW(), NOW() + INTERVAL '14 days')
-        `,
-        [token, user.id],
-      );
+      const token = await createSessionForUser(user.id);
 
       sendJson(response, 200, {
         token,
@@ -438,6 +485,125 @@ const server = createServer(async (request, response) => {
         response,
         400,
         error instanceof Error ? error.message : "Login failed",
+      );
+    }
+    return;
+  }
+
+  if (url.pathname === "/api/auth/google" && request.method === "POST") {
+    try {
+      const body = await parseBody(request);
+      const credential = String(body.credential ?? "");
+      if (!credential) {
+        sendError(response, 400, "Google credential is required.");
+        return;
+      }
+
+      const googleUser = await verifyGoogleCredential(credential);
+      const client = await pool.connect();
+
+      try {
+        await client.query("BEGIN");
+        const { rows: subjectRows } = await client.query(
+          `
+            SELECT id, name, email, created_at
+            FROM users
+            WHERE google_subject = $1
+          `,
+          [googleUser.subject],
+        );
+
+        let user = subjectRows[0] ?? null;
+
+        if (!user) {
+          const { rows: emailRows } = await client.query(
+            `
+              SELECT id, name, email, created_at, google_subject
+              FROM users
+              WHERE email = $1
+            `,
+            [googleUser.email],
+          );
+
+          if (emailRows[0]) {
+            const { rows: updatedRows } = await client.query(
+              `
+                UPDATE users
+                SET google_subject = $1,
+                    name = $2
+                WHERE id = $3
+                RETURNING id, name, email, created_at
+              `,
+              [googleUser.subject, googleUser.name, emailRows[0].id],
+            );
+            user = updatedRows[0];
+          } else {
+            const userId = createId();
+            const createdAt = new Date().toISOString();
+            const randomPassword = randomBytes(32).toString("hex");
+            const { salt, hash } = hashPassword(randomPassword);
+
+            const { rows: insertedRows } = await client.query(
+              `
+                INSERT INTO users (
+                  id,
+                  name,
+                  email,
+                  password_salt,
+                  password_hash,
+                  created_at,
+                  google_subject
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                RETURNING id, name, email, created_at
+              `,
+              [
+                userId,
+                googleUser.name,
+                googleUser.email,
+                salt,
+                hash,
+                createdAt,
+                googleUser.subject,
+              ],
+            );
+            user = insertedRows[0];
+
+            await client.query(
+              `
+                INSERT INTO app_states (user_id, state, updated_at)
+                VALUES ($1, $2::jsonb, NOW())
+              `,
+              [userId, JSON.stringify(createDefaultState())],
+            );
+          }
+        }
+
+        const token = randomBytes(32).toString("hex");
+        await client.query(
+          `
+            INSERT INTO sessions (token, user_id, created_at, expires_at)
+            VALUES ($1, $2, NOW(), NOW() + INTERVAL '14 days')
+          `,
+          [token, user.id],
+        );
+
+        await client.query("COMMIT");
+        sendJson(response, 200, {
+          token,
+          user: sanitizeUser(user),
+        });
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      sendError(
+        response,
+        400,
+        error instanceof Error ? error.message : "Google sign-in failed",
       );
     }
     return;

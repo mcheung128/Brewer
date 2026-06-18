@@ -1,9 +1,29 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 type AuthMode = "login" | "register";
 
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (options: {
+            client_id: string;
+            callback: (response: { credential?: string }) => void;
+          }) => void;
+          renderButton: (
+            parent: HTMLElement,
+            options: Record<string, string | number | boolean>,
+          ) => void;
+        };
+      };
+    };
+  }
+}
+
 type AuthViewProps = {
   error: string;
+  googleClientId?: string;
   isSubmitting: boolean;
   onSubmit: (
     mode: AuthMode,
@@ -11,18 +31,78 @@ type AuthViewProps = {
     email: string,
     password: string,
   ) => Promise<void>;
+  onGoogleLogin: (credential: string) => Promise<void>;
 };
 
-function AuthView({ error, isSubmitting, onSubmit }: AuthViewProps) {
+function AuthView({
+  error,
+  googleClientId,
+  isSubmitting,
+  onSubmit,
+  onGoogleLogin,
+}: AuthViewProps) {
   const [mode, setMode] = useState<AuthMode>("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const googleButtonRef = useRef<HTMLDivElement | null>(null);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     await onSubmit(mode, name, email, password);
   };
+
+  useEffect(() => {
+    if (!googleClientId || mode !== "login") {
+      return;
+    }
+
+    const renderGoogleButton = () => {
+      if (!window.google || !googleButtonRef.current) {
+        return;
+      }
+
+      googleButtonRef.current.innerHTML = "";
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: ({ credential }) => {
+          if (credential) {
+            void onGoogleLogin(credential);
+          }
+        },
+      });
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: "outline",
+        size: "large",
+        text: "signin_with",
+        shape: "pill",
+        width: 320,
+      });
+    };
+
+    if (window.google) {
+      renderGoogleButton();
+      return;
+    }
+
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      'script[src="https://accounts.google.com/gsi/client"]',
+    );
+
+    if (existingScript) {
+      existingScript.addEventListener("load", renderGoogleButton);
+      return () => existingScript.removeEventListener("load", renderGoogleButton);
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.addEventListener("load", renderGoogleButton);
+    document.head.appendChild(script);
+
+    return () => script.removeEventListener("load", renderGoogleButton);
+  }, [googleClientId, mode, onGoogleLogin]);
 
   return (
     <div className="auth-shell">
@@ -108,6 +188,14 @@ function AuthView({ error, isSubmitting, onSubmit }: AuthViewProps) {
                 : "Create Account"}
           </button>
         </form>
+        {mode === "login" && googleClientId ? (
+          <div className="auth-google">
+            <div className="auth-divider">
+              <span>or</span>
+            </div>
+            <div className="auth-google-button" ref={googleButtonRef} />
+          </div>
+        ) : null}
       </section>
     </div>
   );

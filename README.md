@@ -47,6 +47,8 @@ The app will be available on:
 
 Postgres data is stored in the `brewer-postgres-data` Docker volume.
 
+To enable Google login, also set `GOOGLE_CLIENT_ID` to your Google web client ID.
+
 ## Railway
 
 This app now expects a Postgres database instead of `.data/db.json`.
@@ -55,7 +57,8 @@ In Railway:
 
 1. Create a Postgres service.
 2. Add `DATABASE_URL` from that Postgres service to the app service.
-3. Deploy the app service from this repo.
+3. Add `GOOGLE_CLIENT_ID` from your Google OAuth web app credentials.
+4. Deploy the app service from this repo.
 
 The app container:
 
@@ -76,5 +79,6 @@ For Portainer on your Pi host:
 ## Production Notes
 
 - `DATABASE_URL` is required.
+- `GOOGLE_CLIENT_ID` is required if you want the Google sign-in button to appear.
 - The `/health` endpoint checks database connectivity.
 - New users get seeded default templates on first registration.

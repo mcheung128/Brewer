@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
   clearStoredToken,
   fetchCurrentUser,
+  fetchGoogleAuthConfig,
   fetchRemoteState,
+  loginWithGoogle,
   loginUser,
   logoutUser,
   registerUser,
@@ -13,6 +15,7 @@ import {
 import AuthView from "./components/AuthView";
 import BeansView from "./components/BeansView";
 import HistoryView from "./components/HistoryView";
+import LandingPage from "./components/LandingPage";
 import HomeView from "./components/HomeView";
 import InsightsView from "./components/InsightsView";
 import NewBrewView from "./components/NewBrewView";
@@ -33,6 +36,7 @@ import {
 
 type View = "home" | "new" | "beans" | "history" | "templates" | "insights";
 type AuthMode = "login" | "register";
+type Route = "landing" | "login" | "app";
 
 const tasteFields: Array<{ key: TasteAttribute; label: string }> = [
   { key: "acidity", label: "Acidity" },
@@ -140,7 +144,16 @@ const normalizeDraftForMethod = (
   pourTiming: POUR_OVER_METHODS.includes(method) ? draft.pourTiming : "",
 });
 
+const routeFromPath = (path: string): Route => {
+  if (path === "/login") return "login";
+  if (path === "/app") return "app";
+  return "landing";
+};
+
 function App() {
+  const [route, setRoute] = useState<Route>(() =>
+    routeFromPath(window.location.pathname),
+  );
   const [state, setState] = useState<AppState>(() => createDefaultState());
   const [view, setView] = useState<View>("home");
   const [selectedBrewId, setSelectedBrewId] = useState<string | null>(null);
@@ -162,11 +175,43 @@ function App() {
   const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
   const [hasLoadedRemoteState, setHasLoadedRemoteState] = useState(false);
   const [syncError, setSyncError] = useState("");
+  const [googleClientId, setGoogleClientId] = useState<string>("");
+
+  const navigateTo = (nextRoute: Route) => {
+    const nextPath =
+      nextRoute === "landing" ? "/" : nextRoute === "login" ? "/login" : "/app";
+
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({}, "", nextPath);
+    }
+
+    setRoute(nextRoute);
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setRoute(routeFromPath(window.location.pathname));
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  useEffect(() => {
+    void fetchGoogleAuthConfig()
+      .then(({ clientId }) => setGoogleClientId(clientId ?? ""))
+      .catch(() => {
+        setGoogleClientId("");
+      });
+  }, []);
 
   useEffect(() => {
     const bootstrap = async () => {
       const token = getStoredToken();
       if (!token) {
+        if (route === "app") {
+          navigateTo("login");
+        }
         setAuthReady(true);
         return;
       }
@@ -179,15 +224,21 @@ function App() {
         setSession({ token, user });
         setState(remoteState);
         setHasLoadedRemoteState(true);
+        if (route !== "app") {
+          navigateTo("app");
+        }
       } catch {
         clearStoredToken();
+        if (route === "app") {
+          navigateTo("login");
+        }
       } finally {
         setAuthReady(true);
       }
     };
 
     void bootstrap();
-  }, []);
+  }, [route]);
 
   useEffect(() => {
     if (!session || !hasLoadedRemoteState) {
@@ -501,10 +552,36 @@ function App() {
       setState(remoteState);
       setHasLoadedRemoteState(true);
       setView("home");
+      navigateTo("app");
       setSyncError("");
     } catch (error) {
       setAuthError(
         error instanceof Error ? error.message : "Authentication failed",
+      );
+    } finally {
+      setIsAuthSubmitting(false);
+      setAuthReady(true);
+    }
+  };
+
+  const handleGoogleLogin = async (credential: string) => {
+    setIsAuthSubmitting(true);
+    setAuthError("");
+    setHasLoadedRemoteState(false);
+
+    try {
+      const authResponse = await loginWithGoogle(credential);
+      storeToken(authResponse.token);
+      const { state: remoteState } = await fetchRemoteState(authResponse.token);
+      setSession(authResponse);
+      setState(remoteState);
+      setHasLoadedRemoteState(true);
+      setView("home");
+      navigateTo("app");
+      setSyncError("");
+    } catch (error) {
+      setAuthError(
+        error instanceof Error ? error.message : "Google sign-in failed",
       );
     } finally {
       setIsAuthSubmitting(false);
@@ -527,6 +604,7 @@ function App() {
     setState(createDefaultState());
     setSelectedBrewId(null);
     setView("home");
+    navigateTo("landing");
     setHasLoadedRemoteState(false);
     setSyncError("");
     resetDraft();
@@ -546,12 +624,34 @@ function App() {
     );
   }
 
+  if (!session && route === "landing") {
+    return (
+      <LandingPage
+        isSignedIn={false}
+        onOpenApp={() => navigateTo("login")}
+        onOpenLogin={() => navigateTo("login")}
+      />
+    );
+  }
+
   if (!session) {
     return (
       <AuthView
         error={authError}
+        googleClientId={googleClientId}
         isSubmitting={isAuthSubmitting}
+        onGoogleLogin={handleGoogleLogin}
         onSubmit={handleAuthSubmit}
+      />
+    );
+  }
+
+  if (route !== "app") {
+    return (
+      <LandingPage
+        isSignedIn
+        onOpenApp={() => navigateTo("app")}
+        onOpenLogin={() => navigateTo("app")}
       />
     );
   }

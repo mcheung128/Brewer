@@ -7,6 +7,10 @@ type AuthResponse = {
   user: User;
 };
 
+type GoogleAuthConfigResponse = {
+  clientId: string | null;
+};
+
 type RequestOptions = {
   body?: unknown;
   method?: "GET" | "POST" | "PUT";
@@ -52,6 +56,15 @@ export const loginUser = async (email: string, password: string) =>
     method: "POST",
     body: { email, password },
   });
+
+export const loginWithGoogle = async (credential: string) =>
+  request<AuthResponse>("/api/auth/google", {
+    method: "POST",
+    body: { credential },
+  });
+
+export const fetchGoogleAuthConfig = async () =>
+  request<GoogleAuthConfigResponse>("/api/auth/google/config");
 
 export const logoutUser = async (token: string) => {
   await request<{ ok: true }>("/api/auth/logout", {
