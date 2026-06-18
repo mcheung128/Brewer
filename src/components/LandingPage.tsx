@@ -1,5 +1,3 @@
-import cupImage from "../assets/3550841.png";
-
 type LandingPageProps = {
   isSignedIn: boolean;
   onOpenApp: () => void;
