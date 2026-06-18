@@ -23,14 +23,10 @@ const template = (
   water: number,
   grindSize: string,
   waterTemp: number,
-  bloomTime: number,
-  bloomWater: number,
   numberOfPours: number,
   pourTiming: string,
   totalBrewTime: string,
-  agitation: string,
   filterType: string,
-  waterType: string,
 ): RecipeTemplate => ({
   id: createId(),
   name,
@@ -39,14 +35,10 @@ const template = (
   water,
   grindSize,
   waterTemp,
-  bloomTime,
-  bloomWater,
   numberOfPours,
   pourTiming,
   totalBrewTime,
-  agitation,
   filterType,
-  waterType,
 })
 
 export const seededTemplates = (): RecipeTemplate[] => [
@@ -57,14 +49,11 @@ export const seededTemplates = (): RecipeTemplate[] => [
     500,
     'Medium-fine',
     96,
-    45,
-    60,
     5,
     '0:00 bloom, then pours every 30s',
     '3:30',
-    'Gentle swirl after bloom',
     'Paper',
-    'Filtered',
+
   ),
   template(
     'My Daily V60',
@@ -73,14 +62,10 @@ export const seededTemplates = (): RecipeTemplate[] => [
     300,
     'Medium',
     94,
-    35,
-    45,
     4,
     'Pulse pours every 25s',
     '2:50',
-    'Light center swirl',
     'Paper',
-    'Third wave profile',
   ),
   template(
     'Stronger Iced Pourover',
@@ -89,27 +74,23 @@ export const seededTemplates = (): RecipeTemplate[] => [
     220,
     'Medium-fine',
     95,
-    40,
-    60,
     4,
     'Short aggressive pulses',
     '2:40',
-    'One stir after bloom',
     'Wave paper',
-    'Filtered',
   ),
 ]
 
-const defaultState = (): AppState => ({
+export const createDefaultState = (): AppState => ({
   beans: [],
   brews: [],
   templates: seededTemplates(),
 })
 
-export const loadState = (): AppState => {
+export const loadLegacyState = (): AppState => {
   const raw = window.localStorage.getItem(STORAGE_KEY)
   if (!raw) {
-    return defaultState()
+    return createDefaultState()
   }
 
   try {
@@ -127,12 +108,10 @@ export const loadState = (): AppState => {
           : seededTemplates(),
     }
   } catch {
-    return defaultState()
+    return createDefaultState()
   }
 }
 
-export const saveState = (state: AppState) => {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-}
+export const clearLegacyState = () => window.localStorage.removeItem(STORAGE_KEY)
 
 export const createDefaultScores = defaultScores

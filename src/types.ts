@@ -47,14 +47,10 @@ export interface RecipeTemplate {
   water: number
   grindSize: string
   waterTemp: number
-  bloomTime: number
-  bloomWater: number
   numberOfPours: number
   pourTiming: string
   totalBrewTime: string
-  agitation: string
   filterType: string
-  waterType: string
 }
 
 export interface Brew {
@@ -71,23 +67,47 @@ export interface Brew {
   grindSize: string
   grinderUsed: string
   waterTemp: number
-  waterType: string
   filterType: string
   totalBrewTime: string
-  bloomTime: number
-  bloomWater: number
   numberOfPours: number
   pourTiming: string
-  agitation: string
-  drawdownTime: string
-  flavorNotes: string
   changeNextTime: string
   tasteScores: TasteScores
   createdAt: string
 }
 
+export interface NewBrewDraft {
+  name: string
+  method: BrewMethod
+  brewedAt: string
+  beanId: string
+  templateId: string
+  rating: number
+  notes: string
+  dose: number
+  water: number
+  grindSize: string
+  grinderUsed: string
+  waterTemp: number
+  filterType: string
+  totalBrewTime: string
+  numberOfPours: number
+  pourTiming: string
+  changeNextTime: string
+  tasteScores: TasteScores
+}
+
+export type NewBeanDraft = Omit<Bean, 'id' | 'createdAt'>
+
 export interface AppState {
   beans: Bean[]
   brews: Brew[]
   templates: RecipeTemplate[]
+}
+
+export interface User {
+  id: string
+  name: string
+  email: string
+  createdAt: string
 }

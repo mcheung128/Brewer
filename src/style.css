@@ -135,7 +135,7 @@ textarea {
 }
 
 .nav-link.active {
-  background: rgba(82, 173, 153, 0.16);
+  background: rgb(82, 173, 153);
   color: #f5fffd;
 }
 
@@ -472,6 +472,22 @@ textarea {
   gap: 1rem;
 }
 
+.bean-actions {
+  display: grid;
+  justify-items: end;
+  gap: 0.5rem;
+}
+
+.compact-button {
+  padding: 0.55rem 0.9rem;
+  font-size: 0.9rem;
+}
+
+.bean-editor,
+.template-editor {
+  margin-top: 1rem;
+}
+
 .detail-panel {
   min-height: 420px;
 }
@@ -493,6 +509,98 @@ textarea {
 .subpanel > .primary-button,
 .subpanel > .secondary-button {
   margin-top: 1rem;
+}
+
+.auth-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+}
+
+.auth-card {
+  width: min(540px, 100%);
+  padding: 2rem;
+  border-radius: 28px;
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 1rem;
+}
+
+.auth-card h1 {
+  margin: 0;
+  font-family: 'Aptos Display', 'Segoe UI Variable Display', 'Inter', sans-serif;
+  letter-spacing: -0.04em;
+}
+
+.auth-copy {
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.auth-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.auth-toggle-button {
+  border: 1px solid rgba(31, 122, 104, 0.18);
+  border-radius: 16px;
+  padding: 0.95rem 1rem;
+  background: rgba(255, 255, 255, 0.68);
+  color: #1f4d46;
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.auth-toggle-button.active {
+  background: linear-gradient(135deg, #1f7a68, #245e53);
+  color: #f5fffd;
+  border-color: rgba(31, 122, 104, 0.5);
+  box-shadow: 0 12px 28px rgba(31, 122, 104, 0.2);
+}
+
+.auth-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 0.55rem;
+  color: #31454f;
+}
+
+.auth-error,
+.sync-error {
+  margin: 0;
+  color: #b24444;
+  font-size: 0.92rem;
+}
+
+.sidebar-button {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.sidebar-signout-button {
+  width: 100%;
+  margin-top: 1rem;
+  border: 1px solid rgba(143, 183, 177, 0.25);
+  border-radius: 999px;
+  padding: 0.9rem 1.2rem;
+  background: rgba(240, 249, 246, 0.94);
+  color: #183b47;
+  font-weight: 700;
 }
 
 @media (max-width: 1100px) {

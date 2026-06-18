@@ -4,5 +4,12 @@ services:
       context: .
     container_name: brewer
     ports:
-      - "8082:80"
+      - "8082:3001"
+    environment:
+      PORT: 3001
     restart: unless-stopped
+    volumes:
+      - brewer-data:/app/.data
+
+volumes:
+  brewer-data:
