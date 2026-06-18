@@ -20,8 +20,6 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/public ./public
 COPY --from=build /app/server.mjs ./server.mjs
 
-VOLUME ["/app/.data"]
-
 EXPOSE 3001
 
 CMD ["node", "server.mjs"]

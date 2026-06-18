@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = resolve(__filename, "..");
-const DATA_DIR = join(__dirname, ".data");
+const DATA_DIR = resolve(process.env.DATA_DIR ?? join(__dirname, ".data"));
 const DATA_FILE = join(DATA_DIR, "db.json");
 const DIST_DIR = join(__dirname, "dist");
 const PUBLIC_DIR = join(__dirname, "public");
