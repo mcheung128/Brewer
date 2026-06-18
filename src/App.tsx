@@ -329,6 +329,18 @@ function App() {
     }));
   };
 
+  const deleteBeanRecord = (beanId: string) => {
+    setState((current) => ({
+      ...current,
+      beans: current.beans.filter((bean) => bean.id !== beanId),
+      brews: current.brews.filter((brew) => brew.beanId !== beanId),
+    }));
+
+    if (draft.beanId === beanId) {
+      setDraft((current) => ({ ...current, beanId: "" }));
+    }
+  };
+
   const saveBrew = () => {
     if (!draft.name || !draft.beanId) return;
 
@@ -391,6 +403,14 @@ function App() {
     setView("new");
   };
 
+  const deleteBrewRecord = (brewId: string) => {
+    setState((current) => ({
+      ...current,
+      brews: current.brews.filter((brew) => brew.id !== brewId),
+    }));
+    setSelectedBrewId((current) => (current === brewId ? null : current));
+  };
+
   const saveTemplateFromDraft = () => {
     if (!templateDraft.name) return;
 
@@ -435,6 +455,20 @@ function App() {
         template.id === templateId ? { ...template, ...updates } : template,
       ),
     }));
+  };
+
+  const deleteTemplateRecord = (templateId: string) => {
+    setState((current) => ({
+      ...current,
+      templates: current.templates.filter((template) => template.id !== templateId),
+      brews: current.brews.map((brew) =>
+        brew.templateId === templateId ? { ...brew, templateId: undefined } : brew,
+      ),
+    }));
+
+    if (draft.templateId === templateId) {
+      setDraft((current) => ({ ...current, templateId: "" }));
+    }
   };
 
   const handleAuthSubmit = async (
@@ -598,6 +632,7 @@ function App() {
               setShowBeanForm(true);
             }}
             onUpdateBean={updateBeanRecord}
+            onDeleteBean={deleteBeanRecord}
             state={state}
           />
         )}
@@ -610,6 +645,7 @@ function App() {
             formatDate={formatDate}
             formatDateTime={formatDateTime}
             onDuplicateBrew={duplicateBrew}
+            onDeleteBrew={deleteBrewRecord}
             onSelectBrew={setSelectedBrewId}
             selectedBrew={selectedBrew}
             tasteFields={tasteFields}
@@ -625,6 +661,7 @@ function App() {
               setStep(1);
             }}
             onUpdateTemplate={updateTemplateRecord}
+            onDeleteTemplate={deleteTemplateRecord}
             templates={state.templates}
           />
         )}

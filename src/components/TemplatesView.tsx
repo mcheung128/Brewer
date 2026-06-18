@@ -6,6 +6,7 @@ type TemplateDraft = Omit<RecipeTemplate, "id">;
 type TemplatesViewProps = {
   calcRatio: (dose: number, water: number) => string;
   onCreateTemplate: (template: TemplateDraft) => void;
+  onDeleteTemplate: (templateId: string) => void;
   onStartBrew: (templateId: string) => void;
   onUpdateTemplate: (templateId: string, updates: TemplateDraft) => void;
   templates: RecipeTemplate[];
@@ -24,7 +25,7 @@ const buildTemplateDraft = (): TemplateDraft => ({
   filterType: "",
 });
 
-function TemplatesView({ calcRatio, onCreateTemplate, onStartBrew, onUpdateTemplate, templates }: TemplatesViewProps) {
+function TemplatesView({ calcRatio, onCreateTemplate, onDeleteTemplate, onStartBrew, onUpdateTemplate, templates }: TemplatesViewProps) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createDraft, setCreateDraft] = useState<TemplateDraft>(buildTemplateDraft());
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
@@ -144,16 +145,32 @@ function TemplatesView({ calcRatio, onCreateTemplate, onStartBrew, onUpdateTempl
                 {template.grindSize} - {template.waterTemp}C - {template.totalBrewTime}
               </p>
               <div className="inline-actions">
-                <button
-                  className="secondary-button"
-                  onClick={() => {
-                    setEditingTemplateId(template.id);
-                    const { id: _id, ...draft } = template;
-                    setEditDraft(draft);
-                  }}
-                >
-                  Edit
-                </button>
+                <div className="action-row">
+                  <button
+                    className="secondary-button"
+                    onClick={() => {
+                      setEditingTemplateId(template.id);
+                      const { id: _id, ...draft } = template;
+                      setEditDraft(draft);
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="danger-button"
+                    onClick={() => {
+                      if (window.confirm(`Delete template "${template.name}"?`)) {
+                        onDeleteTemplate(template.id);
+                        if (editingTemplateId === template.id) {
+                          setEditingTemplateId(null);
+                          setEditDraft(null);
+                        }
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
                 <button className="secondary-button" onClick={() => onStartBrew(template.id)}>
                   Start Brew
                 </button>

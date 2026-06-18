@@ -5,11 +5,12 @@ type BeansViewProps = {
   calcRatio: (dose: number, water: number) => string;
   formatDate: (value: string) => string;
   onAddBeans: () => void;
+  onDeleteBean: (beanId: string) => void;
   onUpdateBean: (beanId: string, updates: NewBeanDraft) => void;
   state: AppState;
 };
 
-function BeansView({ calcRatio, formatDate, onAddBeans, onUpdateBean, state }: BeansViewProps) {
+function BeansView({ calcRatio, formatDate, onAddBeans, onDeleteBean, onUpdateBean, state }: BeansViewProps) {
   const [editingBeanId, setEditingBeanId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<NewBeanDraft | null>(null);
 
@@ -60,9 +61,22 @@ function BeansView({ calcRatio, formatDate, onAddBeans, onUpdateBean, state }: B
                     </div>
                     <div className="bean-actions">
                       <strong>{relatedBrews.length} brews</strong>
-                      <button className="secondary-button compact-button" onClick={() => startEditing(bean)}>
-                        Edit
-                      </button>
+                      <div className="action-row">
+                        <button className="secondary-button compact-button" onClick={() => startEditing(bean)}>
+                          Edit
+                        </button>
+                        <button
+                          className="danger-button compact-button"
+                          onClick={() => {
+                            if (window.confirm(`Delete ${bean.roaster} ${bean.coffeeName} and its linked brews?`)) {
+                              onDeleteBean(bean.id);
+                              stopEditing();
+                            }
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <p>

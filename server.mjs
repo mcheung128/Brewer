@@ -199,6 +199,11 @@ const serveStatic = (request, response) => {
 const server = createServer(async (request, response) => {
   const url = new URL(request.url ?? "/", `http://${request.headers.host}`);
 
+  if (url.pathname === "/health" && request.method === "GET") {
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
   if (url.pathname === "/api/auth/register" && request.method === "POST") {
     try {
       const body = await parseBody(request);

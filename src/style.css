@@ -478,9 +478,24 @@ textarea {
   gap: 0.5rem;
 }
 
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .compact-button {
   padding: 0.55rem 0.9rem;
   font-size: 0.9rem;
+}
+
+.danger-button {
+  border: 1px solid rgba(178, 68, 68, 0.18);
+  border-radius: 999px;
+  padding: 0.9rem 1.2rem;
+  background: rgba(255, 239, 239, 0.94);
+  color: #8c2d2d;
+  font-weight: 700;
 }
 
 .bean-editor,

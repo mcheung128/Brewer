@@ -51,12 +51,6 @@
       "expiresAt": "2026-07-02T01:09:39.163Z"
     },
     {
-      "token": "807688bea80eb1818396ead65cb1d98398ff6ca4c361132b5f262ebcccb51571",
-      "userId": "mqitert7-2wd8he",
-      "createdAt": "2026-06-18T01:22:20.107Z",
-      "expiresAt": "2026-07-02T01:22:20.107Z"
-    },
-    {
       "token": "9020897364c53fe330bc9fbe5b0e24e3ae087682f4b08f3133a270b01e0bf0dd",
       "userId": "mqitert7-2wd8he",
       "createdAt": "2026-06-18T01:28:01.813Z",
@@ -67,6 +61,12 @@
       "userId": "mqitnucu-vc4yww",
       "createdAt": "2026-06-18T01:29:23.310Z",
       "expiresAt": "2026-07-02T01:29:23.310Z"
+    },
+    {
+      "token": "a1a849474fd069609e71306fadea7a9f3239212012a61c6f215c0ed21c87a039",
+      "userId": "mqitnucu-vc4yww",
+      "createdAt": "2026-06-18T02:45:13.972Z",
+      "expiresAt": "2026-07-02T02:45:13.972Z"
     }
   ],
   "states": {
@@ -343,19 +343,6 @@
           "numberOfPours": 5,
           "pourTiming": "0:00 bloom, then pours every 30s",
           "totalBrewTime": "3:30",
-          "filterType": "Paper"
-        },
-        {
-          "id": "mqitnucu-7g7w83",
-          "name": "My Daily V60",
-          "method": "V60",
-          "dose": 18,
-          "water": 300,
-          "grindSize": "Medium",
-          "waterTemp": 94,
-          "numberOfPours": 4,
-          "pourTiming": "Pulse pours every 25s",
-          "totalBrewTime": "2:50",
           "filterType": "Paper"
         },
         {

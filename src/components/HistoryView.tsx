@@ -4,6 +4,7 @@ type HistoryViewProps = {
   beansById: Record<string, Bean>;
   calcRatio: (dose: number, water: number) => string;
   daysOffRoast: (roastDate: string, brewedAt: string) => number | null;
+  onDeleteBrew: (brewId: string) => void;
   formatDate: (value: string) => string;
   formatDateTime: (value: string) => string;
   onDuplicateBrew: (brew: Brew) => void;
@@ -17,6 +18,7 @@ function HistoryView({
   beansById,
   calcRatio,
   daysOffRoast,
+  onDeleteBrew,
   formatDate,
   formatDateTime,
   onDuplicateBrew,
@@ -72,9 +74,21 @@ function HistoryView({
                 <h2>{selectedBrew.name}</h2>
               </div>
               <div className="inline-actions">
-                <button className="secondary-button" onClick={() => onDuplicateBrew(selectedBrew)}>
-                  Duplicate Brew
-                </button>
+                <div className="action-row">
+                  <button className="secondary-button" onClick={() => onDuplicateBrew(selectedBrew)}>
+                    Duplicate Brew
+                  </button>
+                  <button
+                    className="danger-button"
+                    onClick={() => {
+                      if (window.confirm(`Delete brew "${selectedBrew.name}"?`)) {
+                        onDeleteBrew(selectedBrew.id);
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
                 <button className="primary-button" onClick={() => onDuplicateBrew(selectedBrew)}>
                   Adjust Next Brew
                 </button>
