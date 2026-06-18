@@ -66,5 +66,3 @@ For Portainer on your Synology-managed Pi host:
 docker build -t brewer .
 docker run -d --name brewer -p 8082:3001 -v brewer-data:/app/.data --restart unless-stopped brewer
 ```
-
-=======
