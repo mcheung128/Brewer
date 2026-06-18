@@ -39,20 +39,24 @@ function HistoryView({
         <div className="list">
           {brews.length === 0 ? (
             <div className="empty-state">
-              <h3>No brew history yet</h3>
-              <p>Once you save a brew, it will show up here with duplicate and detail actions.</p>
+              <h3>No caffeine in sight</h3>
             </div>
           ) : (
             brews.map((brew) => (
               <button
                 key={brew.id}
-                className={brew.id === selectedBrew?.id ? "list-item selected" : "list-item"}
+                className={
+                  brew.id === selectedBrew?.id
+                    ? "list-item selected"
+                    : "list-item"
+                }
                 onClick={() => onSelectBrew(brew.id)}
               >
                 <div>
                   <strong>{brew.name}</strong>
                   <span>
-                    {brew.method} - {beansById[brew.beanId]?.roaster ?? "Unknown roaster"}
+                    {brew.method} -{" "}
+                    {beansById[brew.beanId]?.roaster ?? "Unknown roaster"}
                   </span>
                 </div>
                 <div className="list-meta">
@@ -75,13 +79,18 @@ function HistoryView({
               </div>
               <div className="inline-actions">
                 <div className="action-row">
-                  <button className="secondary-button" onClick={() => onDuplicateBrew(selectedBrew)}>
+                  <button
+                    className="secondary-button"
+                    onClick={() => onDuplicateBrew(selectedBrew)}
+                  >
                     Duplicate Brew
                   </button>
                   <button
                     className="danger-button"
                     onClick={() => {
-                      if (window.confirm(`Delete brew "${selectedBrew.name}"?`)) {
+                      if (
+                        window.confirm(`Delete brew "${selectedBrew.name}"?`)
+                      ) {
                         onDeleteBrew(selectedBrew.id);
                       }
                     }}
@@ -89,7 +98,10 @@ function HistoryView({
                     Delete
                   </button>
                 </div>
-                <button className="primary-button" onClick={() => onDuplicateBrew(selectedBrew)}>
+                <button
+                  className="primary-button"
+                  onClick={() => onDuplicateBrew(selectedBrew)}
+                >
                   Adjust Next Brew
                 </button>
               </div>
@@ -103,7 +115,8 @@ function HistoryView({
                   {calcRatio(selectedBrew.dose, selectedBrew.water)}
                 </p>
                 <p>
-                  {selectedBrew.waterTemp}C - {selectedBrew.totalBrewTime} total - {selectedBrew.grindSize}
+                  {selectedBrew.waterTemp}C - {selectedBrew.totalBrewTime} total
+                  - {selectedBrew.grindSize}
                 </p>
               </article>
               <article className="detail-card">
@@ -120,25 +133,34 @@ function HistoryView({
               <article className="detail-card">
                 <h3>Bean context</h3>
                 <p>
-                  {beansById[selectedBrew.beanId]?.roaster} {beansById[selectedBrew.beanId]?.coffeeName}
+                  {beansById[selectedBrew.beanId]?.roaster}{" "}
+                  {beansById[selectedBrew.beanId]?.coffeeName}
                 </p>
-                <p>Roast date: {formatDate(beansById[selectedBrew.beanId]?.roastDate ?? "")}</p>
+                <p>
+                  Roast date:{" "}
+                  {formatDate(beansById[selectedBrew.beanId]?.roastDate ?? "")}
+                </p>
                 <p>
                   Days off roast:{" "}
-                  {daysOffRoast(beansById[selectedBrew.beanId]?.roastDate ?? "", selectedBrew.brewedAt) ?? "Unknown"}
+                  {daysOffRoast(
+                    beansById[selectedBrew.beanId]?.roastDate ?? "",
+                    selectedBrew.brewedAt,
+                  ) ?? "Unknown"}
                 </p>
               </article>
               <article className="detail-card full-width">
                 <h3>Journal notes</h3>
                 <p>{selectedBrew.notes || "No notes added."}</p>
-                <p>Next time: {selectedBrew.changeNextTime || "No adjustment note added."}</p>
+                <p>
+                  Next time:{" "}
+                  {selectedBrew.changeNextTime || "No adjustment note added."}
+                </p>
               </article>
             </div>
           </>
         ) : (
           <div className="empty-state">
-            <h3>Select a brew</h3>
-            <p>Your detailed recipe and tasting notes will appear here.</p>
+            <h3>It's a little empty in here.</h3>
           </div>
         )}
       </section>

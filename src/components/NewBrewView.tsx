@@ -118,6 +118,7 @@ function NewBrewView({
               <input
                 value={draft.name}
                 onChange={(e) => updateDraft("name", e.target.value)}
+                placeholder="Enter brew name"
               />
             </label>
             <label>
@@ -179,6 +180,7 @@ function NewBrewView({
                 </select>
               </label>
             </div>
+            <p>or</p>
             <div className="inline-actions">
               <button
                 className="secondary-button"
