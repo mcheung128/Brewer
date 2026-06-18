@@ -176,6 +176,7 @@ function App() {
   const [hasLoadedRemoteState, setHasLoadedRemoteState] = useState(false);
   const [syncError, setSyncError] = useState("");
   const [googleClientId, setGoogleClientId] = useState<string>("");
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   const navigateTo = (nextRoute: Route) => {
     const nextPath =
@@ -607,6 +608,7 @@ function App() {
     navigateTo("landing");
     setHasLoadedRemoteState(false);
     setSyncError("");
+    setIsMobileNavOpen(false);
     resetDraft();
   };
 
@@ -658,7 +660,14 @@ function App() {
 
   return (
     <div className="shell">
-      <aside className="sidebar">
+      <button
+        aria-hidden={!isMobileNavOpen}
+        className={isMobileNavOpen ? "mobile-sidebar-backdrop visible" : "mobile-sidebar-backdrop"}
+        onClick={() => setIsMobileNavOpen(false)}
+        tabIndex={isMobileNavOpen ? 0 : -1}
+        type="button"
+      />
+      <aside className={isMobileNavOpen ? "sidebar mobile-open" : "sidebar"}>
         <div>
           <p className="brand-kicker">Brewer</p>
           <h2>The coffee logbook</h2>
@@ -668,7 +677,10 @@ function App() {
             <button
               key={key}
               className={view === key ? "nav-link active" : "nav-link"}
-              onClick={() => setView(key as View)}
+              onClick={() => {
+                setView(key as View);
+                setIsMobileNavOpen(false);
+              }}
             >
               {label}
             </button>
@@ -685,6 +697,16 @@ function App() {
       </aside>
 
       <main className="content">
+        <div className="mobile-topbar">
+          <button
+            className="mobile-nav-button"
+            onClick={() => setIsMobileNavOpen((current) => !current)}
+            type="button"
+          >
+            {isMobileNavOpen ? "Close Menu" : "Menu"}
+          </button>
+          <strong>{tabLabels[view]}</strong>
+        </div>
         {view === "home" && (
           <HomeView
             averageRating={averageRating}
