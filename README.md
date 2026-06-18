@@ -25,6 +25,7 @@ That script restarts both dev servers:
 
 ## Container Deployment
 
+<<<<<<< HEAD
 This project is now a single Node-based container:
 
 - Vite builds the frontend into `dist/`
@@ -65,3 +66,5 @@ For Portainer on your Synology-managed Pi host:
 docker build -t brewer .
 docker run -d --name brewer -p 8082:3001 -v brewer-data:/app/.data --restart unless-stopped brewer
 ```
+
+=======
