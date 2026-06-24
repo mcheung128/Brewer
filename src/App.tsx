@@ -86,12 +86,13 @@ const buildDraft = (): NewBrewDraft => ({
   dose: 0,
   water: 0,
   grindSize: "",
-  grinderUsed: "",
+  grinderUsed: null,
   waterTemp: 0,
-  filterType: "",
-  totalBrewTime: "",
-  numberOfPours: 0,
-  pourTiming: "",
+  filterType: null,
+  totalBrewTime: null,
+  numberOfPours: null,
+  pourTiming: null,
+  pourAmounts: null,
   changeNextTime: "",
   tasteScores: createDefaultScores(),
 });
@@ -139,9 +140,10 @@ const normalizeDraftForMethod = (
 ): NewBrewDraft => ({
   ...draft,
   method,
-  filterType: FILTER_METHODS.includes(method) ? draft.filterType : "",
-  numberOfPours: POUR_OVER_METHODS.includes(method) ? draft.numberOfPours : 0,
-  pourTiming: POUR_OVER_METHODS.includes(method) ? draft.pourTiming : "",
+  filterType: FILTER_METHODS.includes(method) ? draft.filterType : null,
+  numberOfPours: POUR_OVER_METHODS.includes(method) ? draft.numberOfPours : null,
+  pourTiming: POUR_OVER_METHODS.includes(method) ? draft.pourTiming : null,
+  pourAmounts: POUR_OVER_METHODS.includes(method) ? draft.pourAmounts : null,
 });
 
 const routeFromPath = (path: string): Route => {
@@ -157,6 +159,7 @@ function App() {
   const [state, setState] = useState<AppState>(() => createDefaultState());
   const [view, setView] = useState<View>("home");
   const [selectedBrewId, setSelectedBrewId] = useState<string | null>(null);
+  const [editingBrewId, setEditingBrewId] = useState<string | null>(null);
   const [draft, setDraft] = useState<NewBrewDraft>(() => buildDraft());
   const [beanDraft, setBeanDraft] = useState<NewBeanDraft>(() =>
     buildBeanDraft(),
@@ -312,9 +315,16 @@ function App() {
 
   const resetDraft = () => {
     setDraft(buildDraft());
+    setEditingBrewId(null);
     setStep(1);
     setShowBeanForm(false);
     setBeanDraft(buildBeanDraft());
+  };
+
+  const startNewBrew = (nextStep = 1) => {
+    resetDraft();
+    setStep(nextStep);
+    setView("new");
   };
 
   const updateDraft = <K extends keyof NewBrewDraft>(
@@ -348,10 +358,11 @@ function App() {
           dose: template.dose,
           water: template.water,
           grindSize: template.grindSize,
+          grinderUsed: template.grinderUsed,
           waterTemp: template.waterTemp,
           numberOfPours: template.numberOfPours,
           pourTiming: template.pourTiming,
-          totalBrewTime: template.totalBrewTime,
+          pourAmounts: template.pourAmounts,
           filterType: template.filterType,
         },
         template.method,
@@ -399,8 +410,10 @@ function App() {
     if (!draft.name || !draft.beanId) return;
 
     const brew: Brew = {
-      id: createId(),
-      createdAt: new Date().toISOString(),
+      id: editingBrewId ?? createId(),
+      createdAt:
+        state.brews.find((entry) => entry.id === editingBrewId)?.createdAt ??
+        new Date().toISOString(),
       name: draft.name,
       method: draft.method,
       brewedAt: draft.brewedAt,
@@ -417,17 +430,57 @@ function App() {
       totalBrewTime: draft.totalBrewTime,
       numberOfPours: draft.numberOfPours,
       pourTiming: draft.pourTiming,
+      pourAmounts: draft.pourAmounts,
       changeNextTime: draft.changeNextTime,
       tasteScores: draft.tasteScores,
     };
 
-    setState((current) => ({ ...current, brews: [brew, ...current.brews] }));
+    setState((current) => ({
+      ...current,
+      brews: editingBrewId
+        ? current.brews.map((entry) => (entry.id === editingBrewId ? brew : entry))
+        : [brew, ...current.brews],
+    }));
     setSelectedBrewId(brew.id);
     setView("history");
     resetDraft();
   };
 
+  const editBrew = (brew: Brew) => {
+    setEditingBrewId(brew.id);
+    setDraft(
+      normalizeDraftForMethod(
+        {
+          name: brew.name,
+          method: brew.method,
+          brewedAt: brew.brewedAt,
+          beanId: brew.beanId,
+          templateId: brew.templateId ?? "",
+          rating: brew.rating,
+          notes: brew.notes,
+          dose: brew.dose,
+          water: brew.water,
+          grindSize: brew.grindSize,
+          grinderUsed: brew.grinderUsed,
+          waterTemp: brew.waterTemp,
+          filterType: brew.filterType,
+          totalBrewTime: brew.totalBrewTime,
+          numberOfPours: brew.numberOfPours,
+          pourTiming: brew.pourTiming,
+          pourAmounts: brew.pourAmounts,
+          changeNextTime: brew.changeNextTime,
+          tasteScores: { ...createDefaultScores(), ...brew.tasteScores },
+        },
+        brew.method,
+      ),
+    );
+    setShowBeanForm(false);
+    setStep(1);
+    setView("new");
+  };
+
   const duplicateBrew = (brew: Brew) => {
+    setEditingBrewId(null);
     setDraft(
       normalizeDraftForMethod(
         {
@@ -447,8 +500,9 @@ function App() {
           totalBrewTime: brew.totalBrewTime,
           numberOfPours: brew.numberOfPours,
           pourTiming: brew.pourTiming,
+          pourAmounts: brew.pourAmounts,
           changeNextTime: brew.changeNextTime,
-          tasteScores: brew.tasteScores,
+          tasteScores: { ...createDefaultScores(), ...brew.tasteScores },
         },
         brew.method,
       ),
@@ -475,10 +529,11 @@ function App() {
       dose: draft.dose,
       water: draft.water,
       grindSize: draft.grindSize,
+      grinderUsed: draft.grinderUsed,
       waterTemp: draft.waterTemp,
       numberOfPours: draft.numberOfPours,
       pourTiming: draft.pourTiming,
-      totalBrewTime: draft.totalBrewTime,
+      pourAmounts: draft.pourAmounts,
       filterType: draft.filterType,
     };
 
@@ -678,7 +733,11 @@ function App() {
               key={key}
               className={view === key ? "nav-link active" : "nav-link"}
               onClick={() => {
-                setView(key as View);
+                if (key === "new") {
+                  startNewBrew();
+                } else {
+                  setView(key as View);
+                }
                 setIsMobileNavOpen(false);
               }}
             >
@@ -716,7 +775,7 @@ function App() {
             brews={brewsSorted}
             brewCount={state.brews.length}
             formatDateTime={formatDateTime}
-            onLogBrew={() => setView("new")}
+            onLogBrew={() => startNewBrew()}
             onOpenHistory={() => setView("history")}
             onSelectBrew={(brewId) => {
               setSelectedBrewId(brewId);
@@ -734,6 +793,7 @@ function App() {
             brewSteps={brewSteps}
             calcRatio={calcRatio}
             draft={draft}
+            editingBrewId={editingBrewId}
             formatDateTime={formatDateTime}
             saveBean={saveBean}
             saveBrew={saveBrew}
@@ -758,8 +818,7 @@ function App() {
             calcRatio={calcRatio}
             formatDate={formatDate}
             onAddBeans={() => {
-              setView("new");
-              setStep(2);
+              startNewBrew(2);
               setShowBeanForm(true);
             }}
             onUpdateBean={updateBeanRecord}
@@ -773,6 +832,7 @@ function App() {
             brews={brewsSorted}
             calcRatio={calcRatio}
             daysOffRoast={daysOffRoast}
+            onEditBrew={editBrew}
             formatDate={formatDate}
             formatDateTime={formatDateTime}
             onDuplicateBrew={duplicateBrew}
@@ -787,6 +847,7 @@ function App() {
             calcRatio={calcRatio}
             onCreateTemplate={createTemplate}
             onStartBrew={(templateId) => {
+              resetDraft();
               applyTemplate(templateId);
               setView("new");
               setStep(1);

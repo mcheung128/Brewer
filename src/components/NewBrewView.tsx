@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import {
   BREW_METHODS,
   type Bean,
@@ -17,6 +17,7 @@ type NewBrewViewProps = {
   brewSteps: readonly string[];
   calcRatio: (dose: number, water: number) => string;
   draft: NewBrewDraft;
+  editingBrewId: string | null;
   formatDateTime: (value: string) => string;
   saveBean: () => void;
   saveBrew: () => void;
@@ -52,6 +53,7 @@ function NewBrewView({
   brewSteps,
   calcRatio,
   draft,
+  editingBrewId,
   formatDateTime,
   saveBean,
   saveBrew,
@@ -70,12 +72,15 @@ function NewBrewView({
   updateDraft,
   updateMethod,
 }: NewBrewViewProps) {
+  const [showAdvancedRecipe, setShowAdvancedRecipe] = useState(false);
+  const [showAdvancedTaste, setShowAdvancedTaste] = useState(false);
+
   return (
     <div className="page-grid">
       <section className="panel">
         <div className="panel-header">
           <div>
-            <h2>Log a new brew</h2>
+            <h2>{editingBrewId ? "Edit brew" : "Log a new brew"}</h2>
           </div>
         </div>
         <div className="progress-shell" aria-label="Brew progress">
@@ -342,8 +347,10 @@ function NewBrewView({
               <label>
                 Grinder used
                 <input
-                  value={draft.grinderUsed}
-                  onChange={(e) => updateDraft("grinderUsed", e.target.value)}
+                  value={draft.grinderUsed ?? ""}
+                  onChange={(e) =>
+                    updateDraft("grinderUsed", e.target.value || null)
+                  }
                   placeholder=""
                 />
               </label>
@@ -361,45 +368,79 @@ function NewBrewView({
               <label>
                 Total brew time
                 <input
-                  value={draft.totalBrewTime}
-                  onChange={(e) => updateDraft("totalBrewTime", e.target.value)}
+                  value={draft.totalBrewTime ?? ""}
+                  onChange={(e) =>
+                    updateDraft("totalBrewTime", e.target.value || null)
+                  }
                   placeholder=""
                 />
               </label>
-              {showsPourFields && (
-                <label>
-                  Number of pours
-                  <input
-                    type="number"
-                    value={draft.numberOfPours || ""}
-                    onChange={(e) =>
-                      updateDraft("numberOfPours", Number(e.target.value))
-                    }
-                    placeholder="4"
-                  />
-                </label>
-              )}
-              {showsPourFields && (
-                <label>
-                  Pour timing
-                  <input
-                    value={draft.pourTiming}
-                    onChange={(e) => updateDraft("pourTiming", e.target.value)}
-                    placeholder="0:00, 0:45, 1:15..."
-                  />
-                </label>
-              )}
-              {showsFilterType && (
-                <label>
-                  Filter type
-                  <input
-                    value={draft.filterType}
-                    onChange={(e) => updateDraft("filterType", e.target.value)}
-                    placeholder=""
-                  />
-                </label>
-              )}
             </div>
+            {(showsPourFields || showsFilterType) && (
+              <details
+                className="subpanel"
+                open={showAdvancedRecipe}
+                onToggle={(event) =>
+                  setShowAdvancedRecipe(event.currentTarget.open)
+                }
+              >
+                <summary className="details-summary">Advanced recipe details</summary>
+                <div className="form-grid compact advanced-grid">
+                  {showsPourFields && (
+                    <label>
+                      Number of pours
+                      <input
+                        type="number"
+                        value={draft.numberOfPours ?? ""}
+                        onChange={(e) =>
+                          updateDraft(
+                            "numberOfPours",
+                            e.target.value ? Number(e.target.value) : null,
+                          )
+                        }
+                        placeholder="4"
+                      />
+                    </label>
+                  )}
+                  {showsPourFields && (
+                    <label>
+                      Pour timing
+                      <input
+                        value={draft.pourTiming ?? ""}
+                        onChange={(e) =>
+                          updateDraft("pourTiming", e.target.value || null)
+                        }
+                        placeholder="0:00, 0:45, 1:15..."
+                      />
+                    </label>
+                  )}
+                  {showsPourFields && (
+                    <label className="full-span">
+                      Pour amounts (g)
+                      <input
+                        value={draft.pourAmounts ?? ""}
+                        onChange={(e) =>
+                          updateDraft("pourAmounts", e.target.value || null)
+                        }
+                        placeholder="50, 70, 90, 90"
+                      />
+                    </label>
+                  )}
+                  {showsFilterType && (
+                    <label>
+                      Filter type
+                      <input
+                        value={draft.filterType ?? ""}
+                        onChange={(e) =>
+                          updateDraft("filterType", e.target.value || null)
+                        }
+                        placeholder=""
+                      />
+                    </label>
+                  )}
+                </div>
+              </details>
+            )}
             <div className="subpanel">
               <div className="split-line">
                 <div>
@@ -490,26 +531,38 @@ function NewBrewView({
                 />
               </label>
             </div>
-            <div className="taste-grid">
-              {tasteFields.map((field) => (
-                <label key={field.key} className="slider-card">
-                  <span>{field.label}</span>
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={draft.tasteScores[field.key]}
-                    onChange={(e) =>
-                      updateDraft("tasteScores", {
-                        ...draft.tasteScores,
-                        [field.key]: Number(e.target.value),
-                      })
-                    }
-                  />
-                  <strong>{draft.tasteScores[field.key]}</strong>
-                </label>
-              ))}
-            </div>
+            <details
+              className="subpanel"
+              open={showAdvancedTaste}
+              onToggle={(event) =>
+                setShowAdvancedTaste(event.currentTarget.open)
+              }
+            >
+              <summary className="details-summary">Advanced taste details</summary>
+              <div className="taste-grid advanced-grid">
+                {tasteFields.map((field) => (
+                  <label key={field.key} className="slider-card">
+                    <span>{field.label}</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={draft.tasteScores[field.key] ?? ""}
+                      onChange={(e) =>
+                        updateDraft("tasteScores", {
+                          ...draft.tasteScores,
+                          [field.key]: e.target.value
+                            ? Number(e.target.value)
+                            : null,
+                        })
+                      }
+                      placeholder="Optional"
+                    />
+                    <strong>{draft.tasteScores[field.key] ?? "Unset"}</strong>
+                  </label>
+                ))}
+              </div>
+            </details>
           </div>
         )}
 
@@ -565,7 +618,7 @@ function NewBrewView({
               onClick={saveBrew}
               disabled={!draft.name || !draft.beanId}
             >
-              Save Brew
+              {editingBrewId ? "Save Changes" : "Save Brew"}
             </button>
           )}
         </div>

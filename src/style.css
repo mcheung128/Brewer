@@ -628,6 +628,36 @@ textarea {
   padding: 1.15rem;
 }
 
+.details-summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #21404a;
+  list-style: none;
+}
+
+.details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.details-summary::before {
+  content: "+";
+  display: inline-grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  margin-right: 0.55rem;
+  border-radius: 999px;
+  background: rgba(24, 59, 71, 0.08);
+}
+
+details[open] > .details-summary::before {
+  content: "-";
+}
+
+.advanced-grid {
+  margin-top: 1rem;
+}
+
 .range-value {
   color: var(--text-soft);
   font-size: 0.9rem;

@@ -18,11 +18,12 @@ const buildTemplateDraft = (): TemplateDraft => ({
   dose: 0,
   water: 0,
   grindSize: "",
+  grinderUsed: null,
   waterTemp: 0,
-  numberOfPours: 0,
-  pourTiming: "",
-  totalBrewTime: "",
-  filterType: "",
+  numberOfPours: null,
+  pourTiming: null,
+  pourAmounts: null,
+  filterType: null,
 });
 
 function TemplatesView({ calcRatio, onCreateTemplate, onDeleteTemplate, onStartBrew, onUpdateTemplate, templates }: TemplatesViewProps) {
@@ -81,6 +82,13 @@ function TemplatesView({ calcRatio, onCreateTemplate, onDeleteTemplate, onStartB
                 <input value={createDraft.grindSize} onChange={(event) => updateCreateDraft("grindSize", event.target.value)} />
               </label>
               <label>
+                Grinder used
+                <input
+                  value={createDraft.grinderUsed ?? ""}
+                  onChange={(event) => updateCreateDraft("grinderUsed", event.target.value || null)}
+                />
+              </label>
+              <label>
                 Water temperature (C)
                 <input
                   type="number"
@@ -92,21 +100,21 @@ function TemplatesView({ calcRatio, onCreateTemplate, onDeleteTemplate, onStartB
                 Number of pours
                 <input
                   type="number"
-                  value={createDraft.numberOfPours || ""}
-                  onChange={(event) => updateCreateDraft("numberOfPours", Number(event.target.value))}
+                  value={createDraft.numberOfPours ?? ""}
+                  onChange={(event) => updateCreateDraft("numberOfPours", event.target.value ? Number(event.target.value) : null)}
                 />
-              </label>
-              <label>
-                Total brew time
-                <input value={createDraft.totalBrewTime} onChange={(event) => updateCreateDraft("totalBrewTime", event.target.value)} />
               </label>
               <label className="full-span">
                 Pour timing
-                <input value={createDraft.pourTiming} onChange={(event) => updateCreateDraft("pourTiming", event.target.value)} />
+                <input value={createDraft.pourTiming ?? ""} onChange={(event) => updateCreateDraft("pourTiming", event.target.value || null)} />
+              </label>
+              <label className="full-span">
+                Pour amounts (g)
+                <input value={createDraft.pourAmounts ?? ""} onChange={(event) => updateCreateDraft("pourAmounts", event.target.value || null)} />
               </label>
               <label className="full-span">
                 Filter type
-                <input value={createDraft.filterType} onChange={(event) => updateCreateDraft("filterType", event.target.value)} />
+                <input value={createDraft.filterType ?? ""} onChange={(event) => updateCreateDraft("filterType", event.target.value || null)} />
               </label>
             </div>
             <div className="inline-actions">
@@ -141,9 +149,8 @@ function TemplatesView({ calcRatio, onCreateTemplate, onDeleteTemplate, onStartB
               <p>
                 {template.dose}g / {template.water}g / 1:{calcRatio(template.dose, template.water)}
               </p>
-              <p>
-                {template.grindSize} - {template.waterTemp}C - {template.totalBrewTime}
-              </p>
+              <p>{template.grindSize} - {template.waterTemp}C</p>
+              {template.grinderUsed ? <p>Grinder: {template.grinderUsed}</p> : null}
               <div className="inline-actions">
                 <div className="action-row">
                   <button
@@ -205,6 +212,13 @@ function TemplatesView({ calcRatio, onCreateTemplate, onDeleteTemplate, onStartB
                       <input value={editDraft.grindSize} onChange={(event) => updateEditDraft("grindSize", event.target.value)} />
                     </label>
                     <label>
+                      Grinder used
+                      <input
+                        value={editDraft.grinderUsed ?? ""}
+                        onChange={(event) => updateEditDraft("grinderUsed", event.target.value || null)}
+                      />
+                    </label>
+                    <label>
                       Water temperature (C)
                       <input
                         type="number"
@@ -216,21 +230,21 @@ function TemplatesView({ calcRatio, onCreateTemplate, onDeleteTemplate, onStartB
                       Number of pours
                       <input
                         type="number"
-                        value={editDraft.numberOfPours || ""}
-                        onChange={(event) => updateEditDraft("numberOfPours", Number(event.target.value))}
+                        value={editDraft.numberOfPours ?? ""}
+                        onChange={(event) => updateEditDraft("numberOfPours", event.target.value ? Number(event.target.value) : null)}
                       />
-                    </label>
-                    <label>
-                      Total brew time
-                      <input value={editDraft.totalBrewTime} onChange={(event) => updateEditDraft("totalBrewTime", event.target.value)} />
                     </label>
                     <label className="full-span">
                       Pour timing
-                      <input value={editDraft.pourTiming} onChange={(event) => updateEditDraft("pourTiming", event.target.value)} />
+                      <input value={editDraft.pourTiming ?? ""} onChange={(event) => updateEditDraft("pourTiming", event.target.value || null)} />
+                    </label>
+                    <label className="full-span">
+                      Pour amounts (g)
+                      <input value={editDraft.pourAmounts ?? ""} onChange={(event) => updateEditDraft("pourAmounts", event.target.value || null)} />
                     </label>
                     <label className="full-span">
                       Filter type
-                      <input value={editDraft.filterType} onChange={(event) => updateEditDraft("filterType", event.target.value)} />
+                      <input value={editDraft.filterType ?? ""} onChange={(event) => updateEditDraft("filterType", event.target.value || null)} />
                     </label>
                   </div>
                   <div className="inline-actions">

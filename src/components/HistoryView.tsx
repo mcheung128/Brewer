@@ -5,6 +5,7 @@ type HistoryViewProps = {
   calcRatio: (dose: number, water: number) => string;
   daysOffRoast: (roastDate: string, brewedAt: string) => number | null;
   onDeleteBrew: (brewId: string) => void;
+  onEditBrew: (brew: Brew) => void;
   formatDate: (value: string) => string;
   formatDateTime: (value: string) => string;
   onDuplicateBrew: (brew: Brew) => void;
@@ -19,6 +20,7 @@ function HistoryView({
   calcRatio,
   daysOffRoast,
   onDeleteBrew,
+  onEditBrew,
   formatDate,
   formatDateTime,
   onDuplicateBrew,
@@ -81,6 +83,12 @@ function HistoryView({
                 <div className="action-row">
                   <button
                     className="secondary-button"
+                    onClick={() => onEditBrew(selectedBrew)}
+                  >
+                    Edit Brew
+                  </button>
+                  <button
+                    className="secondary-button"
                     onClick={() => onDuplicateBrew(selectedBrew)}
                   >
                     Duplicate Brew
@@ -115,9 +123,24 @@ function HistoryView({
                   {calcRatio(selectedBrew.dose, selectedBrew.water)}
                 </p>
                 <p>
-                  {selectedBrew.waterTemp}C - {selectedBrew.totalBrewTime} total
-                  - {selectedBrew.grindSize}
+                  {selectedBrew.waterTemp}C - {selectedBrew.grindSize}
                 </p>
+                {selectedBrew.grinderUsed ? <p>Grinder: {selectedBrew.grinderUsed}</p> : null}
+                {selectedBrew.totalBrewTime ? (
+                  <p>Total brew time: {selectedBrew.totalBrewTime}</p>
+                ) : null}
+                {selectedBrew.numberOfPours ? (
+                  <p>Number of pours: {selectedBrew.numberOfPours}</p>
+                ) : null}
+                {selectedBrew.pourTiming ? (
+                  <p>Pour timing: {selectedBrew.pourTiming}</p>
+                ) : null}
+                {selectedBrew.pourAmounts ? (
+                  <p>Pour amounts: {selectedBrew.pourAmounts}</p>
+                ) : null}
+                {selectedBrew.filterType ? (
+                  <p>Filter type: {selectedBrew.filterType}</p>
+                ) : null}
               </article>
               <article className="detail-card">
                 <h3>Taste scores</h3>
@@ -125,7 +148,7 @@ function HistoryView({
                   {tasteFields.map((field) => (
                     <div key={field.key}>
                       <span>{field.label}</span>
-                      <strong>{selectedBrew.tasteScores[field.key]}</strong>
+                      <strong>{selectedBrew.tasteScores[field.key] ?? "Not set"}</strong>
                     </div>
                   ))}
                 </div>

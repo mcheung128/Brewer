@@ -18,7 +18,7 @@ export type TasteAttribute =
   | 'strength'
   | 'balance'
 
-export type TasteScores = Record<TasteAttribute, number>
+export type TasteScores = Record<TasteAttribute, number | null>
 
 export interface Bean {
   id: string
@@ -44,11 +44,12 @@ export interface RecipeTemplate {
   dose: number
   water: number
   grindSize: string
+  grinderUsed: string | null
   waterTemp: number
-  numberOfPours: number
-  pourTiming: string
-  totalBrewTime: string
-  filterType: string
+  numberOfPours: number | null
+  pourTiming: string | null
+  pourAmounts: string | null
+  filterType: string | null
 }
 
 export interface Brew {
@@ -63,12 +64,13 @@ export interface Brew {
   dose: number
   water: number
   grindSize: string
-  grinderUsed: string
+  grinderUsed: string | null
   waterTemp: number
-  filterType: string
-  totalBrewTime: string
-  numberOfPours: number
-  pourTiming: string
+  filterType: string | null
+  totalBrewTime: string | null
+  numberOfPours: number | null
+  pourTiming: string | null
+  pourAmounts: string | null
   changeNextTime: string
   tasteScores: TasteScores
   createdAt: string
@@ -85,12 +87,13 @@ export interface NewBrewDraft {
   dose: number
   water: number
   grindSize: string
-  grinderUsed: string
+  grinderUsed: string | null
   waterTemp: number
-  filterType: string
-  totalBrewTime: string
-  numberOfPours: number
-  pourTiming: string
+  filterType: string | null
+  totalBrewTime: string | null
+  numberOfPours: number | null
+  pourTiming: string | null
+  pourAmounts: string | null
   changeNextTime: string
   tasteScores: TasteScores
 }
