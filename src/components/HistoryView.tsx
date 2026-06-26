@@ -26,7 +26,6 @@ function HistoryView({
   onDuplicateBrew,
   onSelectBrew,
   selectedBrew,
-  tasteFields,
   brews,
 }: HistoryViewProps) {
   return (
