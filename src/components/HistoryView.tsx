@@ -106,12 +106,6 @@ function HistoryView({
                     Delete
                   </button>
                 </div>
-                <button
-                  className="primary-button"
-                  onClick={() => onDuplicateBrew(selectedBrew)}
-                >
-                  Adjust Next Brew
-                </button>
               </div>
             </div>
             <div className="detail-grid">
@@ -125,7 +119,9 @@ function HistoryView({
                 <p>
                   {selectedBrew.waterTemp}C - {selectedBrew.grindSize}
                 </p>
-                {selectedBrew.grinderUsed ? <p>Grinder: {selectedBrew.grinderUsed}</p> : null}
+                {selectedBrew.grinderUsed ? (
+                  <p>Grinder: {selectedBrew.grinderUsed}</p>
+                ) : null}
                 {selectedBrew.totalBrewTime ? (
                   <p>Total brew time: {selectedBrew.totalBrewTime}</p>
                 ) : null}
@@ -141,17 +137,6 @@ function HistoryView({
                 {selectedBrew.filterType ? (
                   <p>Filter type: {selectedBrew.filterType}</p>
                 ) : null}
-              </article>
-              <article className="detail-card">
-                <h3>Taste scores</h3>
-                <div className="mini-grid">
-                  {tasteFields.map((field) => (
-                    <div key={field.key}>
-                      <span>{field.label}</span>
-                      <strong>{selectedBrew.tasteScores[field.key] ?? "Not set"}</strong>
-                    </div>
-                  ))}
-                </div>
               </article>
               <article className="detail-card">
                 <h3>Bean context</h3>
